@@ -2,5 +2,8 @@
 funky-wallet-ui/
 wallet-api-service/
 mock-services/
+funky-wallet-e2e/
+evm-chain-adapter/
+geth-dev/
 .pids/
 .logs/
