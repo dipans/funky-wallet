@@ -1,1 +1,4 @@
 .DS_Store
+funky-wallet-ui/
+wallet-api-service/
+mock-services/
