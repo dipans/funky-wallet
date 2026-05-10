@@ -1,12 +1,14 @@
 FROM ethereum/client-go:v1.13.14
 
 COPY genesis.json /genesis.json
+# Well-known Hardhat test account #0 private key — dev/e2e only
+COPY keyfile.txt /tmp/keyfile.txt
 
-# Initialise the genesis block then start geth
-# Clique PoA: fast 2s blocks, no mining CPU cost, deterministic
 ENTRYPOINT ["/bin/sh", "-c", "\
   if [ ! -d /root/.ethereum/geth ]; then \
-    geth init --datadir /root/.ethereum /genesis.json; \
+    geth init --datadir /root/.ethereum /genesis.json && \
+    printf '' > /tmp/password.txt && \
+    geth account import --datadir /root/.ethereum --password /tmp/password.txt /tmp/keyfile.txt; \
   fi && \
   geth \
     --datadir /root/.ethereum \
@@ -24,7 +26,7 @@ ENTRYPOINT ["/bin/sh", "-c", "\
     --ws.origins '*' \
     --allow-insecure-unlock \
     --unlock 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 \
-    --password /dev/null \
+    --password /tmp/password.txt \
     --mine \
     --miner.etherbase 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 \
     --nodiscover \
