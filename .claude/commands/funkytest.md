@@ -12,7 +12,12 @@ curl -sf "http://localhost:9090/balance?address=0xf39Fd6e51aad88F6F4ce6aB8827279
 cast block-number --rpc-url http://localhost:8545 2>/dev/null || curl -sf -X POST http://localhost:8545 -H 'Content-Type: application/json' -d '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}' | jq .result
 ```
 
-If any service is unhealthy, stop and tell the user to run `/funkyup` first.
+If Geth is down, stop and tell the user the e2e stack needs to be started first:
+```bash
+bash scripts/start-e2e.sh    # full Docker Compose stack with Geth
+# or for the mock-only dev stack (no Geth):
+bash scripts/start-dev.sh
+```
 
 ### 2. Run the Playwright tests
 
@@ -42,9 +47,12 @@ After the run, report a summary table:
 
 If any test fails, show:
 1. The test name and assertion that failed
-2. The last 20 lines of relevant logs:
+2. Check Docker container logs:
 ```bash
-tail -20 /Users/dipan/MyResources/Projects/funky-wallet/.logs/wallet-api-service.log
+docker logs funkywallet-signing --tail 20
+docker logs funkywallet-evm-adapter --tail 20
+docker logs funkywallet-api-e2e --tail 20
+docker logs funkywallet-geth --tail 20
 ```
 3. A suggested fix based on the error (e.g. "signing coordinator returned 500 — check web3j signing", "transaction not confirmed — Geth may not be mining")
 
