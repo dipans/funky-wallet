@@ -51,9 +51,22 @@ done
 
 # ── 2. Mock services ──────────────────────────────────────────────────────────
 info "Starting mock services..."
-docker compose -f "$ROOT/mock-services/docker-compose.mock.yml" up -d --build --quiet-pull
-wait_http "mock-signing-coordinator" "http://localhost:9000/actuator/health" 20
-wait_http "mock-chain-adapter"       "http://localhost:9090/health" 20
+docker compose -f "$ROOT/mock-services/docker-compose.mock.yml" up -d --build
+# mock services expose business endpoints, not actuator — use POST /mnemonic/generate and GET /health
+wait_http_post() {
+  local name=$1 url=$2 retries=${3:-30}
+  info "Waiting for $name ($url)..."
+  for i in $(seq 1 $retries); do
+    if curl -sf -X POST "$url" -H 'Content-Type: application/json' -d '{}' >/dev/null 2>&1; then
+      ok "$name is up"
+      return 0
+    fi
+    sleep 2
+  done
+  fail "$name did not become healthy after $((retries * 2))s"
+}
+wait_http_post "mock-signing-coordinator" "http://localhost:9000/mnemonic/generate" 20
+wait_http      "mock-chain-adapter"       "http://localhost:9090/balance?address=0x0&network=ETHEREUM" 20
 
 # ── 3. wallet-api-service ─────────────────────────────────────────────────────
 info "Starting wallet-api-service (Liquibase migrations + test data seed)..."
