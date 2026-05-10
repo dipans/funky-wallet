@@ -86,7 +86,7 @@ wait_http "funky-wallet-ui" "http://localhost:3000" 20
 
 # ── 5. Verify test data ───────────────────────────────────────────────────────
 info "Verifying test data..."
-ACCOUNT=$(curl -sf "http://localhost:8080/api/v1/accounts/0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266" 2>/dev/null || echo "")
+ACCOUNT=$(curl -sf "http://localhost:8080/api/v1/accounts/0xae6e338abeeda17b762e846b061ac67b880201ca" 2>/dev/null || echo "")
 if echo "$ACCOUNT" | grep -q "0xf39F"; then
   ok "Test account found in database"
 else
@@ -111,7 +111,7 @@ echo -e "  ${CYAN}Adminer${NC}    http://localhost:8888  (user: funky / pass: fu
 echo -e "  ${CYAN}Signing${NC}    http://localhost:9000"
 echo -e "  ${CYAN}Chain${NC}      http://localhost:9090  (Hoodi testnet)"
 echo ""
-echo -e "  ${YELLOW}Test account${NC}  0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+echo -e "  ${YELLOW}Test account${NC}  0xae6e338abeeda17b762e846b061ac67b880201ca"
 echo -e "  ${YELLOW}Test mnemonic${NC} test test test test test test test test test test test junk"
 echo ""
 echo -e "  Logs: $LOGS_DIR/"
