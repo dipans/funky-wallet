@@ -36,23 +36,7 @@ wait_http() {
   fail "$name did not become healthy after $((retries * 2))s"
 }
 
-# ── 1. Postgres ───────────────────────────────────────────────────────────────
-info "Starting Postgres..."
-docker compose -f "$ROOT/wallet-api-service/docker-compose.dev.yml" up -d --quiet-pull
-info "Waiting for Postgres to be healthy..."
-for i in $(seq 1 20); do
-  if docker exec funkywallet-postgres pg_isready -U funky -d funkywallet_dev >/dev/null 2>&1; then
-    ok "Postgres ready"
-    break
-  fi
-  [ "$i" -eq 20 ] && fail "Postgres did not become ready"
-  sleep 2
-done
-
-# ── 2. Mock services ──────────────────────────────────────────────────────────
-info "Starting mock services..."
-docker compose -f "$ROOT/mock-services/docker-compose.mock.yml" up -d --build
-# mock services expose business endpoints, not actuator — use POST /mnemonic/generate and GET /health
+# ── helper: wait for POST endpoint ───────────────────────────────────────────
 wait_http_post() {
   local name=$1 url=$2 retries=${3:-30}
   info "Waiting for $name ($url)..."
@@ -65,8 +49,25 @@ wait_http_post() {
   done
   fail "$name did not become healthy after $((retries * 2))s"
 }
+
+# ── 1. Postgres + evm-chain-adapter (Hoodi testnet) ──────────────────────────
+info "Starting Postgres and evm-chain-adapter..."
+docker compose -f "$ROOT/wallet-api-service/docker-compose.dev.yml" up -d --build --quiet-pull
+info "Waiting for Postgres to be healthy..."
+for i in $(seq 1 20); do
+  if docker exec funkywallet-postgres pg_isready -U funky -d funkywallet_dev >/dev/null 2>&1; then
+    ok "Postgres ready"
+    break
+  fi
+  [ "$i" -eq 20 ] && fail "Postgres did not become ready"
+  sleep 2
+done
+wait_http "evm-chain-adapter (Hoodi)" "http://localhost:9090/balance?address=0x0&network=ETHEREUM" 30
+
+# ── 2. Mock signing coordinator ───────────────────────────────────────────────
+info "Starting mock-signing-coordinator..."
+docker compose -f "$ROOT/mock-services/docker-compose.mock.yml" up -d --build mock-signing-coordinator mock-mpc-node-1 mock-mpc-node-2 mock-mpc-node-3
 wait_http_post "mock-signing-coordinator" "http://localhost:9000/mnemonic/generate" 20
-wait_http      "mock-chain-adapter"       "http://localhost:9090/balance?address=0x0&network=ETHEREUM" 20
 
 # ── 3. wallet-api-service ─────────────────────────────────────────────────────
 info "Starting wallet-api-service (Liquibase migrations + test data seed)..."
@@ -108,7 +109,7 @@ echo -e "  ${CYAN}API${NC}        http://localhost:8080"
 echo -e "  ${CYAN}Swagger${NC}    http://localhost:8080/swagger-ui.html"
 echo -e "  ${CYAN}Adminer${NC}    http://localhost:8888  (user: funky / pass: funky)"
 echo -e "  ${CYAN}Signing${NC}    http://localhost:9000"
-echo -e "  ${CYAN}Chain${NC}      http://localhost:9090"
+echo -e "  ${CYAN}Chain${NC}      http://localhost:9090  (Hoodi testnet)"
 echo ""
 echo -e "  ${YELLOW}Test account${NC}  0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
 echo -e "  ${YELLOW}Test mnemonic${NC} test test test test test test test test test test test junk"
