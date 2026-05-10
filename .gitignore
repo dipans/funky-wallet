@@ -2,3 +2,5 @@
 funky-wallet-ui/
 wallet-api-service/
 mock-services/
+.pids/
+.logs/
