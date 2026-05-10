@@ -1,0 +1,14 @@
+server:
+  port: 9090
+
+geth:
+  rpc:
+    url: ${GETH_RPC_URL:http://localhost:8545}
+  chain:
+    id: ${GETH_CHAIN_ID:1337}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health

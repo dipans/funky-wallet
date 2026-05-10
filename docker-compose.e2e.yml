@@ -1,0 +1,129 @@
+services:
+
+  # ── Ethereum node (Clique PoA, chainId 1337, 2s blocks) ──────────────────
+  geth:
+    build: ./geth-dev
+    container_name: funkywallet-geth
+    restart: unless-stopped
+    ports:
+      - "8545:8545"   # HTTP JSON-RPC
+      - "8546:8546"   # WebSocket
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8545 --post-data '{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"params\":[],\"id\":1}' | grep -q result"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ── Postgres ──────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: funkywallet-postgres-e2e
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: funkywallet_e2e
+      POSTGRES_USER: funky
+      POSTGRES_PASSWORD: funky
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U funky -d funkywallet_e2e"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── Mock signing coordinator ──────────────────────────────────────────────
+  mock-signing-coordinator:
+    build: ./mock-services/mock-signing-coordinator
+    container_name: funkywallet-signing
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+    environment:
+      MPC_NODES: "mock-mpc-node-1:9011,mock-mpc-node-2:9012,mock-mpc-node-3:9013"
+      THRESHOLD: 2
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:9000/actuator/health | grep -q UP"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  mock-mpc-node-1:
+    build: ./mock-services/mock-mpc-node
+    container_name: funkywallet-mpc-1
+    restart: unless-stopped
+    ports:
+      - "9011:9011"
+    environment:
+      NODE_ID: mpc-node-1
+      PORT: 9011
+
+  mock-mpc-node-2:
+    build: ./mock-services/mock-mpc-node
+    container_name: funkywallet-mpc-2
+    restart: unless-stopped
+    ports:
+      - "9012:9012"
+    environment:
+      NODE_ID: mpc-node-2
+      PORT: 9012
+
+  mock-mpc-node-3:
+    build: ./mock-services/mock-mpc-node
+    container_name: funkywallet-mpc-3
+    restart: unless-stopped
+    ports:
+      - "9013:9013"
+    environment:
+      NODE_ID: mpc-node-3
+      PORT: 9013
+
+  # ── EVM chain adapter (real web3j → Geth) ────────────────────────────────
+  evm-chain-adapter:
+    build: ./evm-chain-adapter
+    container_name: funkywallet-evm-adapter
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    environment:
+      GETH_RPC_URL: http://geth:8545
+      GETH_CHAIN_ID: 1337
+    depends_on:
+      geth:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:9090/health | grep -q UP"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ── Wallet API service ────────────────────────────────────────────────────
+  wallet-api-service:
+    build: ./wallet-api-service
+    container_name: funkywallet-api-e2e
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: e2e
+      DB_URL: jdbc:postgresql://postgres:5432/funkywallet_e2e
+      DB_USER: funky
+      DB_PASS: funky
+      SIGNING_COORDINATOR_URL: http://mock-signing-coordinator:9000
+      CHAIN_ADAPTER_URL: http://evm-chain-adapter:9090
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mock-signing-coordinator:
+        condition: service_healthy
+      evm-chain-adapter:
+        condition: service_healthy
+
+  # ── Frontend ──────────────────────────────────────────────────────────────
+  funky-wallet-ui:
+    build: ./funky-wallet-ui
+    container_name: funkywallet-ui-e2e
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - wallet-api-service
