@@ -126,7 +126,10 @@ services:
 
   # ── Frontend (nginx serving the built React app) ──────────────────────────
   funky-wallet-ui:
-    build: ./funky-wallet-ui
+    build:
+      context: ./funky-wallet-ui
+      args:
+        VITE_AUTH_DISABLED: "true"
     container_name: funkywallet-ui-e2e
     restart: unless-stopped
     ports:
