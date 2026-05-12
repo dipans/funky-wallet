@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -40,6 +41,28 @@ public class ChainAdapterController {
     @GetMapping("/health")
     public Map<String, String> health() {
         return Map.of("status", "UP", "node", evmService.getNodeInfo());
+    }
+
+    // GET /block/latest
+    @GetMapping("/block/latest")
+    public Map<String, Object> getLatestBlock() {
+        EvmService.BlockInfo info = evmService.getLatestBlock();
+        return Map.of("blockNumber", info.blockNumber(), "blockHash", info.blockHash());
+    }
+
+    // GET /block/{blockNumber}/transactions
+    @GetMapping("/block/{blockNumber}/transactions")
+    public List<Map<String, String>> getBlockTransactions(@PathVariable long blockNumber) {
+        List<EvmService.TxInfo> txList = evmService.getBlockTransactions(blockNumber);
+        return txList.stream()
+                .map(tx -> Map.of(
+                        "hash", tx.hash(),
+                        "fromAddress", tx.fromAddress(),
+                        "toAddress", tx.toAddress(),
+                        "value", tx.value(),
+                        "blockHash", tx.blockHash()
+                ))
+                .toList();
     }
 
     @Data

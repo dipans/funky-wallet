@@ -8,13 +8,17 @@ import org.web3j.crypto.Credentials;
 import org.web3j.crypto.RawTransaction;
 import org.web3j.crypto.TransactionEncoder;
 import org.web3j.protocol.Web3j;
+import org.web3j.protocol.core.DefaultBlockParameter;
 import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.methods.response.*;
+import org.web3j.protocol.core.methods.response.EthBlock.TransactionObject;
 import org.web3j.utils.Convert;
 import org.web3j.utils.Numeric;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -73,6 +77,47 @@ public class EvmService {
             return web3j.web3ClientVersion().send().getWeb3ClientVersion();
         } catch (Exception e) {
             return "unavailable";
+        }
+    }
+
+    public record BlockInfo(long blockNumber, String blockHash) {}
+
+    public record TxInfo(String hash, String fromAddress, String toAddress, String value, String blockHash) {}
+
+    public BlockInfo getLatestBlock() {
+        try {
+            EthBlock response = web3j.ethGetBlockByNumber(DefaultBlockParameterName.LATEST, false).send();
+            EthBlock.Block block = response.getBlock();
+            return new BlockInfo(block.getNumber().longValue(), block.getHash());
+        } catch (Exception e) {
+            log.error("Failed to get latest block: {}", e.getMessage());
+            throw new RuntimeException("Failed to get latest block", e);
+        }
+    }
+
+    public List<TxInfo> getBlockTransactions(long blockNumber) {
+        try {
+            EthBlock response = web3j.ethGetBlockByNumber(
+                    DefaultBlockParameter.valueOf(BigInteger.valueOf(blockNumber)), true).send();
+            EthBlock.Block block = response.getBlock();
+            if (block == null) {
+                return new ArrayList<>();
+            }
+            String blockHash = block.getHash();
+            List<TxInfo> result = new ArrayList<>();
+            for (EthBlock.TransactionResult<?> txResult : block.getTransactions()) {
+                TransactionObject tx = (TransactionObject) txResult.get();
+                if (tx.getTo() == null) {
+                    // skip contract creation transactions
+                    continue;
+                }
+                String valueEth = Convert.fromWei(tx.getValue().toString(), Convert.Unit.ETHER).toPlainString();
+                result.add(new TxInfo(tx.getHash(), tx.getFrom(), tx.getTo(), valueEth, blockHash));
+            }
+            return result;
+        } catch (Exception e) {
+            log.error("Failed to get transactions for block {}: {}", blockNumber, e.getMessage());
+            throw new RuntimeException("Failed to get block transactions", e);
         }
     }
 }
