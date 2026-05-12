@@ -111,6 +111,7 @@ services:
       DB_PASS: funky
       SIGNING_COORDINATOR_URL: http://mock-signing-coordinator:9000
       CHAIN_ADAPTER_URL: http://evm-chain-adapter:9090
+      E2E_USER_ID: e2e|test-user
     depends_on:
       postgres:
         condition: service_healthy
