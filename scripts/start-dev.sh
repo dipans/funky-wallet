@@ -87,10 +87,10 @@ wait_http "funky-wallet-ui" "http://localhost:3000" 20
 # ── 5. Verify test data ───────────────────────────────────────────────────────
 info "Verifying test data..."
 ACCOUNT=$(curl -sf "http://localhost:8080/api/v1/accounts/0xae6e338abeeda17b762e846b061ac67b880201ca" 2>/dev/null || echo "")
-if echo "$ACCOUNT" | grep -q "0xf39F"; then
+if echo "$ACCOUNT" | grep -qi "0xae6e338"; then
   ok "Test account found in database"
 else
-  warn "Test account not found — Liquibase seed may not have run yet, check logs/.logs/wallet-api-service.log"
+  warn "Test account not found — Liquibase seed may not have run yet, check $LOGS_DIR/wallet-api-service.log"
 fi
 
 MNEMONIC_RESP=$(curl -sf -X POST http://localhost:9000/mnemonic/generate 2>/dev/null || echo "")
