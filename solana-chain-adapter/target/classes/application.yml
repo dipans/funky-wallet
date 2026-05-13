@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: solana-chain-adapter
+
+server:
+  port: 9091
+
+solana:
+  # Devnet by default for local dev; override with SOLANA_RPC_URL for mainnet/testnet
+  rpc:
+    url: ${SOLANA_RPC_URL:https://api.devnet.solana.com}
+
+logging:
+  level:
+    com.funkywallet: INFO
