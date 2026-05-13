@@ -97,6 +97,21 @@ services:
       timeout: 10s
       retries: 15
 
+  # ── Solana chain adapter — connects to Solana devnet ─────────────────────
+  solana-chain-adapter:
+    build: ./solana-chain-adapter
+    container_name: funkywallet-solana-adapter
+    restart: unless-stopped
+    ports:
+      - "9091:9091"
+    environment:
+      SOLANA_RPC_URL: https://api.devnet.solana.com
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:9091/health | grep -q UP"]
+      interval: 5s
+      timeout: 10s
+      retries: 15
+
   # ── Wallet API service ────────────────────────────────────────────────────
   wallet-api-service:
     build: ./wallet-api-service
@@ -110,7 +125,8 @@ services:
       DB_USER: funky
       DB_PASS: funky
       SIGNING_COORDINATOR_URL: http://mock-signing-coordinator:9000
-      CHAIN_ADAPTER_URL: http://evm-chain-adapter:9090
+      EVM_CHAIN_ADAPTER_URL: http://evm-chain-adapter:9090
+      SOLANA_CHAIN_ADAPTER_URL: http://solana-chain-adapter:9091
       E2E_USER_ID: e2e|test-user
     depends_on:
       postgres:
@@ -118,6 +134,8 @@ services:
       mock-signing-coordinator:
         condition: service_healthy
       evm-chain-adapter:
+        condition: service_healthy
+      solana-chain-adapter:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8080/api/v1/health | grep -q UP"]

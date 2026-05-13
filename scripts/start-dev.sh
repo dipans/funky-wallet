@@ -62,7 +62,8 @@ for i in $(seq 1 20); do
   [ "$i" -eq 20 ] && fail "Postgres did not become ready"
   sleep 2
 done
-wait_http "evm-chain-adapter (Hoodi)" "http://localhost:9090/balance?address=0x0&network=ETHEREUM" 30
+wait_http "evm-chain-adapter (Hoodi)"   "http://localhost:9090/health" 30
+wait_http "solana-chain-adapter (devnet)" "http://localhost:9091/health" 30
 
 # ── 2. Mock signing coordinator ───────────────────────────────────────────────
 info "Starting mock-signing-coordinator..."
@@ -109,7 +110,8 @@ echo -e "  ${CYAN}API${NC}        http://localhost:8080"
 echo -e "  ${CYAN}Swagger${NC}    http://localhost:8080/swagger-ui.html"
 echo -e "  ${CYAN}Adminer${NC}    http://localhost:8888  (user: funky / pass: funky)"
 echo -e "  ${CYAN}Signing${NC}    http://localhost:9000"
-echo -e "  ${CYAN}Chain${NC}      http://localhost:9090  (Hoodi testnet)"
+echo -e "  ${CYAN}EVM${NC}        http://localhost:9090  (Hoodi testnet)"
+echo -e "  ${CYAN}Solana${NC}     http://localhost:9091  (devnet)"
 echo ""
 echo -e "  ${YELLOW}Test account${NC}  0xae6e338abeeda17b762e846b061ac67b880201ca"
 echo -e "  ${YELLOW}Test mnemonic${NC} test test test test test test test test test test test junk"
