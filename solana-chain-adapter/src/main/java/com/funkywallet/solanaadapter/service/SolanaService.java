@@ -79,8 +79,9 @@ public class SolanaService {
      */
     public String broadcast(String signedTxBase64) {
         try {
-            RpcSendTransactionConfig config = new RpcSendTransactionConfig();
-            config.setEncoding(RpcSendTransactionConfig.Encoding.base64);
+            RpcSendTransactionConfig config = RpcSendTransactionConfig.builder()
+                .encoding(RpcSendTransactionConfig.Encoding.base64)
+                .build();
             String txHash = rpcClient.getApi().sendRawTransaction(signedTxBase64, config);
             log.info("Broadcast Solana tx: {}", txHash);
             return txHash;
