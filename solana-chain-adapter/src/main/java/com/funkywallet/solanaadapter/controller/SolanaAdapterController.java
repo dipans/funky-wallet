@@ -1,11 +1,13 @@
 package com.funkywallet.solanaadapter.controller;
 
 import com.funkywallet.solanaadapter.service.SolanaService;
+import com.funkywallet.solanaadapter.service.SolanaWatcherService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -13,6 +15,7 @@ import java.util.Map;
 public class SolanaAdapterController {
 
     private final SolanaService solanaService;
+    private final SolanaWatcherService solanaWatcherService;
 
     // GET /balance?address=&network=
     @GetMapping("/balance")
@@ -41,6 +44,16 @@ public class SolanaAdapterController {
     public Map<String, String> setupAccount(@RequestBody SetupRequest req) {
         String nonceAccount = solanaService.setupNonceAccount(req.getWalletAddress());
         return Map.of("nonceAccount", nonceAccount);
+    }
+
+    // GET /account/{address}/new-transactions?since={lastSignature}
+    // Used by BlockWatcherService to detect incoming SOL transfers.
+    // Returns transactions where address received SOL, newer than lastSignature.
+    @GetMapping("/account/{address}/new-transactions")
+    public List<SolanaWatcherService.IncomingTx> getNewTransactions(
+            @PathVariable String address,
+            @RequestParam(required = false) String since) {
+        return solanaWatcherService.getNewIncomingTransactions(address, since);
     }
 
     // GET /health

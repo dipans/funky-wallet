@@ -111,6 +111,9 @@ public class SolanaService {
         }
     }
 
+    /** Exposes the RPC client for use by SolanaWatcherService. */
+    public RpcClient getRpcClient() { return rpcClient; }
+
     public String getNodeInfo() {
         try {
             return rpcClient.getApi().getVersion().getSolanaCore();
