@@ -47,13 +47,12 @@ public class SolanaAdapterController {
     }
 
     // GET /account/{address}/new-transactions?since={lastSignature}
-    // Used by BlockWatcherService to detect incoming SOL transfers.
-    // Returns transactions where address received SOL, newer than lastSignature.
+    // Used by BlockWatcherService to detect both incoming and outgoing SOL transfers.
     @GetMapping("/account/{address}/new-transactions")
-    public List<SolanaWatcherService.IncomingTx> getNewTransactions(
+    public List<SolanaWatcherService.SolanaTx> getNewTransactions(
             @PathVariable String address,
             @RequestParam(required = false) String since) {
-        return solanaWatcherService.getNewIncomingTransactions(address, since);
+        return solanaWatcherService.getNewTransactions(address, since);
     }
 
     // GET /health
