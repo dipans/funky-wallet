@@ -18,14 +18,16 @@ funky-wallet/
 ├── mock-services/               ← Phantom's domain (mock infra)
 │   ├── CLAUDE.md
 │   └── agent-spec.md
-├── evm-chain-adapter/           ← Forge's domain (real Ethereum adapter)
+├── evm-chain-adapter/           ← Forge's domain (Ethereum/EVM adapter)
+│   └── CLAUDE.md
+├── solana-chain-adapter/        ← Forge's domain (Solana adapter)
 │   └── CLAUDE.md
 ├── funky-wallet-e2e/            ← Scout's domain (Playwright e2e tests)
 │   └── CLAUDE.md
 ├── scripts/                     ← start/stop scripts
-│   ├── start-dev.sh             # bring up local profile
+│   ├── start-dev.sh             # local profile: Postgres + adapters + signing + API + UI
 │   ├── stop-dev.sh
-│   ├── start-e2e.sh             # bring up full e2e stack
+│   ├── start-e2e.sh             # full e2e stack in Docker
 │   └── stop-e2e.sh
 └── docker-compose.e2e.yml       ← full e2e stack (Geth + Postgres + all services)
 ```
@@ -38,11 +40,12 @@ funky-wallet/
 | Forge | Backend | `wallet-api-service/` | :8080 |
 | Phantom | Mock infra | `mock-services/` | :9000, :9011-9013 |
 | Forge | EVM adapter | `evm-chain-adapter/` | :9090 |
+| Forge | Solana adapter | `solana-chain-adapter/` | :9091 |
 | Scout | E2E tests | `funky-wallet-e2e/` | — |
 
 ## System architecture
 
-### Local / dev profile (Hoodi testnet)
+### Local / dev profile
 ```
 Browser → Auth0 Universal Login
               ↓ JWT (sub claim = userId)
@@ -50,21 +53,25 @@ Browser → Auth0 Universal Login
               ↓ /api proxy  (Bearer token on every request)
          wallet-api-service (:8080)
               ↓ JwtAuthenticationFilter extracts sub → SecurityContext
-              ↓ signing calls               ↓ chain calls
-  mock-signing-coordinator (:9000)   evm-chain-adapter (:9090)
-       ↓ MPC rounds                         ↓ JSON-RPC
-  mock-mpc-node-1/2/3 (:9011-9013)   Hoodi testnet (remote)
+              ↓ signing             ↓ EVM chain calls    ↓ Solana chain calls
+  mock-signing-coordinator    evm-chain-adapter        solana-chain-adapter
+       (:9000)                  (:9090)                    (:9091)
+       ↓ MPC rounds             ↓ JSON-RPC               ↓ JSON-RPC
+  mock-mpc-node-1/2/3          Hoodi testnet             Solana devnet
+  (:9011-9013)
 ```
 
-### E2E profile (local Geth)
+### E2E profile (local Geth, VITE_AUTH_DISABLED=true)
 ```
-funky-wallet-ui (:3000, VITE_AUTH_DISABLED=true)
-         ↓ /api proxy (no auth header — E2E_USER_ID env var used instead)
-wallet-api-service (:8080, E2E_USER_ID=e2e|test-user)
-         ↓                          ↓
-mock-signing-coordinator (:9000)  evm-chain-adapter (:9090)
-                                         ↓
-                                  Geth dev node (:8545, chainId 1337)
+funky-wallet-ui (:3000)
+         ↓ /api proxy (E2E_USER_ID env var as identity)
+wallet-api-service (:8080)
+         ↓ signing            ↓ EVM              ↓ Solana
+  mock-signing-coordinator  evm-chain-adapter  solana-chain-adapter
+       (:9000)                (:9090)              (:9091)
+                              ↓                    ↓
+                       local Geth            Solana devnet
+                       (:8545, chainId 1337)
 ```
 
 ## Rules
@@ -73,16 +80,24 @@ mock-signing-coordinator (:9000)  evm-chain-adapter (:9090)
 - Mnemonic must never appear in logs, DB, or persistent state anywhere in the stack
 - API contract between Pixel and Forge is defined in `wallet-api-service/CLAUDE.md`
 - JWT validation is NOT in the app — Istio owns it in prod; app only extracts `sub` claim
-- Per-user scoping: all account and transaction queries are filtered by userId from JWT sub
-- Block watcher runs every 15s, detects incoming transactions via fromAddress/toAddress matching
+- `AnonymousAuthenticationToken` is treated as no identity (userId = null) in all services
+- Per-user scoping: accounts and transactions filtered by userId from JWT sub
+- EVM block watcher: polls evm-chain-adapter every 15s by block number
+- Solana block watcher: polls solana-chain-adapter per address via getSignaturesForAddress
+- Network-specific fields stored in `chain_details TEXT` column (JSON) — not on accounts table
 
 ## Scripts
 
 ```bash
-bash scripts/start-dev.sh   # local profile: Postgres + evm-chain-adapter (Hoodi) + signing + API + UI
+bash scripts/start-dev.sh   # Postgres + evm + solana adapters + signing + API + UI
 bash scripts/stop-dev.sh
 
-bash scripts/start-e2e.sh   # e2e stack: Geth + Postgres + all services in Docker
+bash scripts/start-e2e.sh   # full Docker stack (Geth + devnet + all services)
 bash scripts/stop-e2e.sh
-cd funky-wallet-e2e && npm test   # run Playwright tests
+
+# Run e2e tests
+cd funky-wallet-e2e && npm test                              # all tests
+cd funky-wallet-e2e && npm test tests/account-lifecycle      # EVM only
+cd funky-wallet-e2e && npm test tests/solana-lifecycle       # Solana only
+SOLANA_TEST_ADDRESS=<addr> npm test tests/solana-lifecycle   # custom funded address
 ```
