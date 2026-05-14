@@ -4,5 +4,6 @@ wallet-api-service/
 mock-services/
 funky-wallet-e2e/
 evm-chain-adapter/
+solana-chain-adapter/target/
 .pids/
 .logs/
