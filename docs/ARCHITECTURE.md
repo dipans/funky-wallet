@@ -7,49 +7,54 @@ Funky Wallet is a non-custodial MPC wallet where private keys are split across m
 ## 1. System Overview
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#f0f4ff', 'lineColor': '#666'}}}%%
 graph TB
-    subgraph "User"
-        Browser["Browser / App"]
-    end
+    classDef user      fill:#4A90D9,stroke:#2C6FAC,color:#fff,font-weight:bold
+    classDef auth      fill:#9B59B6,stroke:#7D3C98,color:#fff,font-weight:bold
+    classDef frontend  fill:#27AE60,stroke:#1E8449,color:#fff,font-weight:bold
+    classDef backend   fill:#E67E22,stroke:#CA6F1E,color:#fff,font-weight:bold
+    classDef db        fill:#E74C3C,stroke:#CB4335,color:#fff,font-weight:bold
+    classDef signing   fill:#F39C12,stroke:#D68910,color:#fff,font-weight:bold
+    classDef adapter   fill:#1ABC9C,stroke:#17A589,color:#fff,font-weight:bold
+    classDef chain     fill:#7F8C8D,stroke:#566573,color:#fff,font-weight:bold
 
-    subgraph "Auth"
-        Auth0["Auth0\n(Universal Login)"]
-    end
+    Browser["Browser / App"]:::user
+    Auth0["Auth0\nUniversal Login"]:::auth
 
-    subgraph "Funky Wallet"
-        UI["funky-wallet-ui\n:3000\nReact SPA"]
-        API["wallet-api-service\n:8080\nJava Spring Boot"]
-        DB[("PostgreSQL\n:5432")]
+    subgraph FW["  Funky Wallet  "]
+        UI["funky-wallet-ui\n:3000  React SPA"]:::frontend
+        API["wallet-api-service\n:8080  Spring Boot"]:::backend
+        DB[("PostgreSQL\n:5432")]:::db
 
-        subgraph "Signing (MPC)"
-            SC["mock-signing-coordinator\n:9000"]
-            MPC1["mock-mpc-node-1\n:9011"]
-            MPC2["mock-mpc-node-2\n:9012"]
-            MPC3["mock-mpc-node-3\n:9013"]
+        subgraph Signing["  MPC Signing  "]
+            SC["signing-coordinator\n:9000"]:::signing
+            MPC1["mpc-node-1\n:9011"]:::signing
+            MPC2["mpc-node-2\n:9012"]:::signing
+            MPC3["mpc-node-3\n:9013"]:::signing
         end
 
-        subgraph "Chain Adapters"
-            EVM["evm-chain-adapter\n:9090\nweb3j"]
-            SOL["solana-chain-adapter\n:9091\nsolanaj"]
+        subgraph Adapters["  Chain Adapters  "]
+            EVM["evm-chain-adapter\n:9090  web3j"]:::adapter
+            SOL["solana-chain-adapter\n:9091  solanaj"]:::adapter
         end
     end
 
-    subgraph "Blockchains"
-        Hoodi["Hoodi Testnet\n(EVM)"]
-        DevNet["Solana Devnet"]
-        Geth["Local Geth\n(e2e only)"]
+    subgraph Chains["  Blockchains  "]
+        Hoodi["Hoodi Testnet\nEVM"]:::chain
+        DevNet["Solana Devnet"]:::chain
+        Geth["Local Geth\ne2e only"]:::chain
     end
 
     Browser -- "HTTPS" --> Auth0
     Browser -- "HTTPS" --> UI
-    UI -- "Bearer JWT\n/api proxy" --> API
+    UI -- "Bearer JWT · /api proxy" --> API
     API -- "JPA" --> DB
     API -- "HTTP" --> SC
     API -- "HTTP" --> EVM
     API -- "HTTP" --> SOL
-    SC -- "HTTP (MPC rounds)" --> MPC1
-    SC -- "HTTP (MPC rounds)" --> MPC2
-    SC -- "HTTP (MPC rounds)" --> MPC3
+    SC -- "MPC rounds" --> MPC1
+    SC -- "MPC rounds" --> MPC2
+    SC -- "MPC rounds" --> MPC3
     EVM -- "JSON-RPC" --> Hoodi
     EVM -- "JSON-RPC" --> Geth
     SOL -- "JSON-RPC" --> DevNet
@@ -60,51 +65,51 @@ graph TB
 ## 2. Component Detail
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#f0f4ff', 'lineColor': '#555'}}}%%
 graph LR
-    subgraph "funky-wallet-ui :3000"
-        AuthGuard["AuthGuard\n(Auth0 redirect)"]
-        ApiToken["ApiTokenProvider\n(injects Bearer)"]
-        Store["Zustand Store\n(accounts, activeAccount)\nnot persisted to localStorage"]
-        Dashboard["Dashboard\nPortfolio + Recent Txs\nnetwork/account filters"]
-        Activity["Activity\nall user txs"]
-        Send["Send\nform + mnemonic input"]
+    classDef ui      fill:#27AE60,stroke:#1E8449,color:#fff
+    classDef api     fill:#E67E22,stroke:#CA6F1E,color:#fff
+    classDef signing fill:#F39C12,stroke:#D68910,color:#fff
+    classDef adapter fill:#1ABC9C,stroke:#17A589,color:#fff
+
+    subgraph UI["  funky-wallet-ui :3000  "]
+        AuthGuard["AuthGuard\nAuth0 redirect"]:::ui
+        ApiToken["ApiTokenProvider\ninjects Bearer"]:::ui
+        Store["Zustand Store\naccounts · activeAccount\nnot in localStorage"]:::ui
+        Dashboard["Dashboard\nPortfolio + filters"]:::ui
+        Activity["Activity\nall user txs"]:::ui
+        Send["Send\nform + mnemonic"]:::ui
     end
 
-    subgraph "wallet-api-service :8080"
-        JWTFilter["JwtAuthenticationFilter\nextract sub → SecurityContext"]
-        AccSvc["AccountService\nuserId-scoped CRUD"]
-        TxSvc["TransactionService\nuserId-scoped + paginated"]
-        EVMWatcher["BlockWatcherService\nwatchBlocks()\nEVM block iteration"]
-        SolWatcher["BlockWatcherService\nwatchSolanaAccounts()\nper-address signatures"]
-        ChainClient["ChainAdapterClient\nroutes by networkType\nEVM→:9090 Solana→:9091"]
-        SignClient["SigningCoordinatorClient"]
+    subgraph API["  wallet-api-service :8080  "]
+        JWTFilter["JwtAuthenticationFilter\nextract sub → SecurityContext"]:::api
+        AccSvc["AccountService\nuserId-scoped CRUD"]:::api
+        TxSvc["TransactionService\nuserId-scoped + paginated"]:::api
+        EVMWatch["watchBlocks()\nEVM block iteration"]:::api
+        SolWatch["watchSolanaAccounts()\nper-address signatures"]:::api
+        ChainClient["ChainAdapterClient\nEVM → :9090\nSolana → :9091"]:::api
+        SignClient["SigningCoordinatorClient"]:::api
     end
 
-    subgraph "mock-signing-coordinator :9000"
-        Vault["MnemonicVault\nAES-256-GCM encrypted\nin-memory"]
-        EVMSign["EVM signing\nBIP-32 secp256k1\nm/44'/60'/0'/0/0"]
-        SolSign["Solana signing\nSLIP-0010 ed25519\nm/44'/501'/0'/0'"]
+    subgraph SC["  signing-coordinator :9000  "]
+        Vault["MnemonicVault\nAES-256-GCM in-memory"]:::signing
+        EVMSign["EVM\nBIP-32 secp256k1\nm/44'/60'/0'/0/0"]:::signing
+        SolSign["Solana\nSLIP-0010 ed25519\nm/44'/501'/0'/0'"]:::signing
     end
 
-    subgraph "evm-chain-adapter :9090"
-        Web3j["web3j\nJSON-RPC client"]
-    end
-
-    subgraph "solana-chain-adapter :9091"
-        Solanaj["solanaj\nJSON-RPC client"]
+    subgraph Adapters["  Chain Adapters  "]
+        Web3j["evm-chain-adapter :9090\nweb3j · Hoodi / Geth"]:::adapter
+        Solanaj["solana-chain-adapter :9091\nsolanaj · Devnet"]:::adapter
     end
 
     AuthGuard --> ApiToken --> Store
     Dashboard & Activity & Send --> Store
     Dashboard & Activity & Send -- "axios + Bearer" --> JWTFilter
     JWTFilter --> AccSvc & TxSvc
-    AccSvc --> ChainClient & SignClient
-    TxSvc --> ChainClient & SignClient
-    EVMWatcher --> ChainClient
-    SolWatcher --> ChainClient
+    AccSvc & TxSvc --> ChainClient & SignClient
+    EVMWatch & SolWatch --> ChainClient
     ChainClient --> Web3j & Solanaj
-    SignClient --> Vault
-    Vault --> EVMSign & SolSign
+    SignClient --> Vault --> EVMSign & SolSign
 ```
 
 ---
@@ -112,6 +117,7 @@ graph LR
 ## 3. Database Schema
 
 ```mermaid
+%%{init: {'theme': 'forest'}}%%
 erDiagram
     accounts {
         UUID id PK
@@ -123,7 +129,7 @@ erDiagram
         VARCHAR networkType
         VARCHAR environment
         VARCHAR userId
-        TEXT chain_details "JSON — Solana: nonceAccount + nonceAuthority"
+        TEXT chain_details "JSON: Solana nonceAccount+nonceAuthority"
         TIMESTAMP createdAt
     }
 
@@ -143,15 +149,15 @@ erDiagram
 
     block_sync_state {
         UUID id PK
-        VARCHAR network UK "EVM network name e.g. ETHEREUM"
+        VARCHAR network UK
         BIGINT lastProcessedBlock
         VARCHAR lastProcessedBlockHash
         TIMESTAMP updatedAt
     }
 
     solana_sync_state {
-        VARCHAR address PK "Solana wallet address"
-        VARCHAR lastSignature "most recent finalized sig processed"
+        VARCHAR address PK
+        VARCHAR lastSignature
         TIMESTAMP updatedAt
     }
 ```
@@ -162,31 +168,39 @@ erDiagram
 |---------|-------|
 | EVM | `null` |
 | Solana | `{"nonceAccount":"<base58>","nonceAuthority":"<base58>"}` |
-| Bitcoin (future) | `{"xpub":"...","addressType":"p2wpkh"}` |
+| Bitcoin *(future)* | `{"xpub":"...","addressType":"p2wpkh"}` |
 
 ---
 
 ## 4. Authentication Flow
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'actorBkg': '#9B59B6', 'actorTextColor': '#fff', 'actorBorder': '#7D3C98', 'signalColor': '#555', 'noteBkgColor': '#f8f0ff', 'noteBorderColor': '#9B59B6'}}}%%
 sequenceDiagram
     actor User
     participant UI as funky-wallet-ui
-    participant Auth0
+    participant Auth0 as Auth0
+    participant Istio as Istio Sidecar
     participant API as wallet-api-service
-    participant Istio as Istio Sidecar (prod)
 
-    User->>UI: navigate to app
-    UI->>Auth0: redirect to Universal Login
-    Auth0-->>User: login page
-    User->>Auth0: credentials
-    Auth0-->>UI: JWT access token (sub = userId)
-    UI->>UI: ApiTokenProvider stores token getter
-    User->>UI: any action (e.g. view accounts)
-    UI->>API: GET /api/v1/accounts\nAuthorization: Bearer <JWT>
-    Note over Istio: prod: validates JWT signature\n(RequestAuthentication + DENY-all policy)
-    API->>API: JwtAuthenticationFilter\ndecodes payload (no sig verify)\nextracts sub → SecurityContext
-    API-->>UI: Account[] filtered by userId
+    rect rgb(230, 210, 255)
+        Note over User,Auth0: Login
+        User->>UI: navigate to app
+        UI->>Auth0: redirect to Universal Login
+        Auth0-->>User: login page
+        User->>Auth0: credentials
+        Auth0-->>UI: JWT (sub = userId)
+    end
+
+    rect rgb(210, 240, 255)
+        Note over UI,API: Authenticated request
+        User->>UI: view accounts
+        UI->>Istio: GET /api/v1/accounts Bearer JWT
+        Note over Istio: prod: validates JWT signature\nRequestAuthentication + DENY-all
+        Istio->>API: forward (sig already verified)
+        API->>API: JwtAuthenticationFilter\ndecode payload → extract sub
+        API-->>UI: Account[] filtered by userId
+    end
 ```
 
 ---
@@ -194,22 +208,30 @@ sequenceDiagram
 ## 5. EVM Account Creation
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'actorBkg': '#E67E22', 'actorTextColor': '#fff', 'actorBorder': '#CA6F1E', 'noteBkgColor': '#fff8ee', 'noteBorderColor': '#E67E22'}}}%%
 sequenceDiagram
     participant UI as funky-wallet-ui
     participant API as wallet-api-service
-    participant SC as mock-signing-coordinator
+    participant SC as signing-coordinator
     participant DB as PostgreSQL
 
-    UI->>API: POST /api/v1/accounts\n{ network, chainId, chainName, networkType }
-    API->>SC: POST /mnemonic/generate
-    SC-->>API: { mnemonic }
-    API->>SC: POST /keypair/derive\n{ mnemonic, network: "ETHEREUM" }
-    Note over SC: BIP-39 seed → BIP-32\nm/44'/60'/0'/0/0\nsecp256k1 → Ethereum address
-    SC->>SC: vault.store(address, mnemonic)
-    SC-->>API: { address, publicKey }
-    API->>DB: INSERT accounts (address, userId, networkType, ...)\nchain_details = null (EVM)
-    API-->>UI: { account, mnemonic }
-    UI->>UI: show mnemonic once\nclear from memory
+    rect rgb(255, 235, 200)
+        Note over UI,SC: Key derivation
+        UI->>API: POST /api/v1/accounts\n{network, chainId, chainName, networkType}
+        API->>SC: POST /mnemonic/generate
+        SC-->>API: {mnemonic}
+        API->>SC: POST /keypair/derive\n{mnemonic, network:"ETHEREUM"}
+        Note over SC: BIP-39 → BIP-32\nm/44'/60'/0'/0/0\nsecp256k1 → 0x address
+        SC->>SC: vault.store(address, mnemonic)
+        SC-->>API: {address, publicKey}
+    end
+
+    rect rgb(255, 220, 180)
+        Note over API,DB: Persist
+        API->>DB: INSERT accounts\nchain_details = null
+        API-->>UI: {account, mnemonic}
+        UI->>UI: show mnemonic once\nclear from memory
+    end
 ```
 
 ---
@@ -217,25 +239,32 @@ sequenceDiagram
 ## 6. Solana Account Creation
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'actorBkg': '#1ABC9C', 'actorTextColor': '#fff', 'actorBorder': '#17A589', 'noteBkgColor': '#edfaf7', 'noteBorderColor': '#1ABC9C'}}}%%
 sequenceDiagram
     participant UI as funky-wallet-ui
     participant API as wallet-api-service
-    participant SC as mock-signing-coordinator
+    participant SC as signing-coordinator
     participant SOL as solana-chain-adapter
     participant DB as PostgreSQL
 
-    UI->>API: POST /api/v1/accounts\n{ network: SOLANA, chainId: 0, ... }
-    API->>SC: POST /mnemonic/generate
-    SC-->>API: { mnemonic }
-    API->>SC: POST /keypair/derive\n{ mnemonic, network: "SOLANA" }
-    Note over SC: BIP-39 seed → SLIP-0010\nm/44'/501'/0'/0'\ned25519 → base58 address
-    SC->>SC: vault.store(address, mnemonic)
-    SC-->>API: { address, publicKey }
-    API->>SOL: POST /account/setup\n{ walletAddress }
-    Note over SOL: SHA-256("solana-nonce:"+addr)\n→ deterministic nonce account address\n(prod: create real on-chain nonce account)
-    SOL-->>API: { nonceAccount }
-    API->>DB: INSERT accounts\nchain_details = {"nonceAccount":"...","nonceAuthority":"<walletAddr>"}
-    API-->>UI: { account, mnemonic }
+    rect rgb(200, 245, 235)
+        Note over UI,SC: Key derivation (ed25519)
+        UI->>API: POST /api/v1/accounts\n{network:SOLANA, chainId:0, ...}
+        API->>SC: POST /mnemonic/generate
+        SC-->>API: {mnemonic}
+        API->>SC: POST /keypair/derive\n{mnemonic, network:"SOLANA"}
+        Note over SC: BIP-39 → SLIP-0010\nm/44'/501'/0'/0'\ned25519 → base58 address
+        SC-->>API: {address, publicKey}
+    end
+
+    rect rgb(170, 235, 220)
+        Note over API,DB: Nonce account + persist
+        API->>SOL: POST /account/setup\n{walletAddress}
+        Note over SOL: SHA-256("solana-nonce:"+addr)\n→ nonce account address\n(prod: create on-chain)
+        SOL-->>API: {nonceAccount}
+        API->>DB: INSERT accounts\nchain_details={"nonceAccount":"...","nonceAuthority":"..."}
+        API-->>UI: {account, mnemonic}
+    end
 ```
 
 ---
@@ -243,30 +272,41 @@ sequenceDiagram
 ## 7. Send Transaction (EVM)
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'actorBkg': '#3498DB', 'actorTextColor': '#fff', 'actorBorder': '#2980B9', 'noteBkgColor': '#eef6ff', 'noteBorderColor': '#3498DB'}}}%%
 sequenceDiagram
     participant UI as funky-wallet-ui
     participant API as wallet-api-service
     participant EVM as evm-chain-adapter
-    participant SC as mock-signing-coordinator
+    participant SC as signing-coordinator
     participant Chain as Hoodi / Geth
 
-    UI->>API: POST /api/v1/transactions\n{ fromAddress, toAddress, amount, network, mnemonic }
-    API->>API: verify fromAddress belongs to current userId
-    API->>EVM: POST /tx/build\n{ from, to, amount, network }
-    EVM->>Chain: ethGetTransactionCount (nonce)
-    EVM->>Chain: ethGasPrice
-    Chain-->>EVM: nonce, gasPrice
-    EVM-->>API: { unsignedTx: "from|0xRLPencoded" }
-    API->>SC: POST /transaction/sign\n{ accountAddress, unsignedTx, network, chainId }
-    Note over SC: vault.decrypt(address) → mnemonic\nBIP-32 derive credentials\nEIP-155 sign with chainId
-    SC-->>API: { signedTx: "0xsignedRLP" }
-    API->>EVM: POST /tx/broadcast\n{ signedTx, network }
-    EVM->>Chain: eth_sendRawTransaction
-    Chain-->>EVM: txHash
-    EVM-->>API: { txHash }
-    API->>API: save tx PENDING\nasync confirmTransactionAsync (3s delay)
-    API-->>UI: { tx: PENDING, hash }
-    Note over API: async: set CONFIRMED after 3s
+    rect rgb(200, 230, 255)
+        Note over API,Chain: Build unsigned tx
+        UI->>API: POST /api/v1/transactions\n{fromAddress, toAddress, amount, network}
+        API->>API: verify ownership (userId check)
+        API->>EVM: POST /tx/build {from, to, amount}
+        EVM->>Chain: eth_getTransactionCount · eth_gasPrice
+        Chain-->>EVM: nonce, gasPrice
+        EVM-->>API: {unsignedTx: "from|0xRLP"}
+    end
+
+    rect rgb(170, 210, 255)
+        Note over API,Chain: Sign and broadcast
+        API->>SC: POST /transaction/sign\n{accountAddress, unsignedTx, chainId}
+        Note over SC: vault.decrypt → mnemonic\nBIP-32 credentials\nEIP-155 sign
+        SC-->>API: {signedTx: "0x..."}
+        API->>EVM: POST /tx/broadcast {signedTx}
+        EVM->>Chain: eth_sendRawTransaction
+        Chain-->>EVM: txHash
+        EVM-->>API: {txHash}
+    end
+
+    rect rgb(140, 195, 255)
+        Note over API: Persist + async confirm
+        API->>API: save PENDING
+        API-->>UI: {tx, hash}
+        Note over API: async (3s): set CONFIRMED
+    end
 ```
 
 ---
@@ -274,27 +314,35 @@ sequenceDiagram
 ## 8. Send Transaction (Solana)
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'actorBkg': '#8E44AD', 'actorTextColor': '#fff', 'actorBorder': '#6C3483', 'noteBkgColor': '#f8eeff', 'noteBorderColor': '#8E44AD'}}}%%
 sequenceDiagram
     participant UI as funky-wallet-ui
     participant API as wallet-api-service
     participant SOL as solana-chain-adapter
-    participant SC as mock-signing-coordinator
+    participant SC as signing-coordinator
     participant Chain as Solana Devnet
 
-    UI->>API: POST /api/v1/transactions\n{ fromAddress, toAddress, amount, network: SOLANA, mnemonic }
-    API->>SOL: POST /tx/build\n{ from, to, amount, network }
-    SOL->>Chain: getLatestBlockhash
-    Chain-->>SOL: blockhash
-    Note over SOL: returns params string:\n"from|to|lamports|blockhash"\n(no crypto here)
-    SOL-->>API: { unsignedTx: "from|to|lamports|blockhash" }
-    API->>SC: POST /transaction/sign\n{ accountAddress, unsignedTx, network: SOLANA }
-    Note over SC: SLIP-0010 derive ed25519 key\nsolanaj: build Transaction\n(SystemProgram.transfer)\nsign → base64 wire format
-    SC-->>API: { signedTx: "<base64 wire format>" }
-    API->>SOL: POST /tx/broadcast\n{ signedTx, network }
-    SOL->>Chain: sendRawTransaction (encoding=base64)
-    Chain-->>SOL: signature (txHash)
-    SOL-->>API: { txHash }
-    API-->>UI: { tx: PENDING, hash }
+    rect rgb(235, 210, 255)
+        Note over API,Chain: Fetch blockhash
+        UI->>API: POST /api/v1/transactions\n{fromAddress, toAddress, amount, network:SOLANA}
+        API->>SOL: POST /tx/build {from, to, amount}
+        SOL->>Chain: getLatestBlockhash
+        Chain-->>SOL: blockhash
+        Note over SOL: returns params string\n"from|to|lamports|blockhash"\n(no crypto in adapter)
+        SOL-->>API: {unsignedTx: "from|to|lamports|blockhash"}
+    end
+
+    rect rgb(215, 180, 255)
+        Note over API,Chain: Build · sign · broadcast
+        API->>SC: POST /transaction/sign\n{accountAddress, unsignedTx, network:SOLANA}
+        Note over SC: SLIP-0010 → ed25519 key\nsolanaj: build Transaction\nSystemProgram.transfer\nsign → base64 wire format
+        SC-->>API: {signedTx: "<base64>"}
+        API->>SOL: POST /tx/broadcast {signedTx}
+        SOL->>Chain: sendRawTransaction (base64)
+        Chain-->>SOL: signature
+        SOL-->>API: {txHash}
+        API-->>UI: {tx:PENDING, hash}
+    end
 ```
 
 ---
@@ -302,29 +350,37 @@ sequenceDiagram
 ## 9. EVM Incoming Transaction Detection
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'actorBkg': '#27AE60', 'actorTextColor': '#fff', 'actorBorder': '#1E8449', 'noteBkgColor': '#eefaf3', 'noteBorderColor': '#27AE60'}}}%%
 sequenceDiagram
-    participant Sched as @Scheduled (15s)
+    participant Sched as @Scheduled 15s
     participant BW as BlockWatcherService
     participant EVM as evm-chain-adapter
     participant Chain as Hoodi / Geth
     participant DB as PostgreSQL
 
-    Sched->>BW: watchBlocks()
-    BW->>DB: SELECT all account addresses
-    BW->>EVM: GET /block/latest
-    EVM->>Chain: eth_getBlockByNumber(LATEST)
-    Chain-->>EVM: { blockNumber, blockHash }
-    EVM-->>BW: { blockNumber, blockHash }
-    BW->>DB: SELECT block_sync_state WHERE network='ETHEREUM'
-    loop for each new block (lastProcessed+1 → latest)
-        BW->>EVM: GET /block/{n}/transactions
-        EVM->>Chain: eth_getBlockByNumber(n, fullTxs=true)
-        Chain-->>EVM: [{ hash, from, to, value }]
-        EVM-->>BW: [TxInfo]
-        loop for each tx where toAddress in watchedAddresses
-            BW->>DB: INSERT transaction\n(status=RECEIVED, blockHash)
+    rect rgb(200, 245, 220)
+        Note over BW,Chain: Discover new blocks
+        Sched->>BW: watchBlocks()
+        BW->>DB: SELECT account addresses (all EVM)
+        BW->>EVM: GET /block/latest
+        EVM->>Chain: eth_getBlockByNumber(LATEST)
+        Chain-->>EVM: {blockNumber, blockHash}
+        EVM-->>BW: {blockNumber, blockHash}
+        BW->>DB: SELECT block_sync_state WHERE network='ETHEREUM'
+    end
+
+    rect rgb(170, 235, 200)
+        Note over BW,DB: Process each new block
+        loop for each new block
+            BW->>EVM: GET /block/{n}/transactions
+            EVM->>Chain: eth_getBlockByNumber(n, fullTxs)
+            Chain-->>EVM: [{hash, from, to, value}]
+            EVM-->>BW: [TxInfo]
+            loop toAddress in watchedAddresses
+                BW->>DB: INSERT tx (RECEIVED, blockHash)
+            end
+            BW->>DB: UPDATE block_sync_state lastProcessedBlock=n
         end
-        BW->>DB: UPDATE block_sync_state\n(lastProcessedBlock=n)
     end
 ```
 
@@ -333,31 +389,38 @@ sequenceDiagram
 ## 10. Solana Incoming Transaction Detection
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'actorBkg': '#E74C3C', 'actorTextColor': '#fff', 'actorBorder': '#CB4335', 'noteBkgColor': '#fff0ee', 'noteBorderColor': '#E74C3C'}}}%%
 sequenceDiagram
-    participant Sched as @Scheduled (15s)
+    participant Sched as @Scheduled 15s
     participant BW as BlockWatcherService
     participant SOL as solana-chain-adapter
     participant Chain as Solana Devnet
     participant DB as PostgreSQL
 
-    Sched->>BW: watchSolanaAccounts()
-    BW->>DB: SELECT addresses WHERE networkType='SOLANA'
-    loop for each Solana address
-        BW->>DB: SELECT solana_sync_state WHERE address=?
-        Note over DB: returns lastSignature (null = first run)
-        BW->>SOL: GET /account/{addr}/new-transactions?since={lastSig}
-        SOL->>Chain: getSignaturesForAddress(addr, limit=50, FINALIZED)
-        Chain-->>SOL: [signatures, newest-first]
-        loop for each sig (stop at lastSig)
-            SOL->>Chain: getTransaction(sig)
-            Chain-->>SOL: { accountKeys, preBalances, postBalances }
-            Note over SOL: delta = postBal[ourIdx] - preBal[ourIdx]\nskip if delta <= 0 (not a receive)
+    rect rgb(255, 210, 205)
+        Note over BW,DB: Load per-address state
+        Sched->>BW: watchSolanaAccounts()
+        BW->>DB: SELECT addresses WHERE networkType='SOLANA'
+    end
+
+    rect rgb(255, 185, 178)
+        Note over BW,DB: Poll each address
+        loop for each Solana address
+            BW->>DB: SELECT solana_sync_state (lastSignature)
+            BW->>SOL: GET /account/{addr}/new-transactions?since={lastSig}
+            SOL->>Chain: getSignaturesForAddress(addr, 50, FINALIZED)
+            Chain-->>SOL: [signatures newest-first]
+            loop each sig until lastSig
+                SOL->>Chain: getTransaction(sig)
+                Chain-->>SOL: {accountKeys, preBalances, postBalances}
+                Note over SOL: delta=post-pre for our address\nskip if delta ≤ 0
+            end
+            SOL-->>BW: [IncomingTx{sig, from, to, amount, blockTime}]
+            loop each IncomingTx
+                BW->>DB: INSERT tx (RECEIVED, confirmedAt=blockTime)
+            end
+            BW->>DB: UPDATE solana_sync_state lastSignature=newest
         end
-        SOL-->>BW: [IncomingTx{ sig, from, to, amount, blockTime }]
-        loop for each IncomingTx
-            BW->>DB: INSERT transaction\n(status=RECEIVED, confirmedAt=blockTime)
-        end
-        BW->>DB: UPDATE solana_sync_state\n(lastSignature = newest sig seen)
     end
 ```
 
@@ -392,4 +455,4 @@ sequenceDiagram
 |-------|----------|-------|
 | EVM | Iterate new blocks by number | `block_sync_state.lastProcessedBlock` per network |
 | Solana | Poll signatures per address | `solana_sync_state.lastSignature` per address |
-| Bitcoin (future) | Poll UTXOs or use address subscriptions | TBD |
+| Bitcoin *(future)* | Poll UTXOs or address subscriptions | TBD |
