@@ -1,4 +1,4 @@
-Bring up the FunkyWallet local development stack (Postgres + evm-chain-adapter → Hoodi testnet + mock signing + API + UI).
+Bring up the full FunkyWallet local development stack: Postgres + EVM adapter (Hoodi) + Solana adapter (devnet) + mock signing + wallet-api-service + funky-wallet-ui.
 
 ## Steps
 
@@ -14,17 +14,17 @@ bash scripts/start-dev.sh
 # Backend health
 curl -sf http://localhost:8080/api/v1/health | jq .
 
-# Test account in DB with Hoodi chain metadata
-curl -sf http://localhost:8080/api/v1/accounts/0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 | jq '{address, chainName, chainId, environment}'
-
-# Real Hoodi on-chain balance (via evm-chain-adapter → Hoodi RPC)
-curl -sf "http://localhost:8080/api/v1/accounts/0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266/balance" | jq .
-
 # Signing coordinator
 curl -sf -X POST http://localhost:9000/mnemonic/generate -H 'Content-Type: application/json' -d '{}' | jq .mnemonic
 
-# evm-chain-adapter (Hoodi)
+# EVM chain adapter (Hoodi testnet)
 curl -sf "http://localhost:9090/balance?address=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266&network=ETHEREUM" | jq .
+
+# Solana chain adapter (devnet)
+curl -sf "http://localhost:9091/health" | jq .
+
+# Frontend reachable
+curl -sf -o /dev/null -w "%{http_code}" http://localhost:3000 && echo " OK"
 ```
 
 ### 3. Report a status table
@@ -35,19 +35,19 @@ curl -sf "http://localhost:9090/balance?address=0xf39Fd6e51aad88F6F4ce6aB8827279
 | wallet-api-service | http://localhost:8080 | ✓/✗ | |
 | mock-signing-coordinator | http://localhost:9000 | ✓/✗ | |
 | evm-chain-adapter (Hoodi) | http://localhost:9090 | ✓/✗ | |
-| Postgres | localhost:5432 | ✓/✗ | |
+| solana-chain-adapter (devnet) | http://localhost:9091 | ✓/✗ | |
+| Postgres | localhost:5432 | ✓/✗ | via Docker |
+| Adminer | http://localhost:8888 | ✓/✗ | DB UI |
 
 ### 4. On failure
 Check `.logs/` for the relevant service and report the last 20 lines with a suggested fix.
 
 ### 5. On success
 ```
-Test account:  0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
-Test mnemonic: test test test test test test test test test test test junk
 Frontend:      http://localhost:3000
 Swagger:       http://localhost:8080/swagger-ui.html
-Adminer:       http://localhost:8888  (funky / funky)
-Chain:         Hoodi testnet (chainId 560048)
+Adminer:       http://localhost:8888  (funky / funky / funkywallet_dev)
+EVM chain:     Hoodi testnet (chainId 560048)
+Solana chain:  Devnet
+Block watcher: polls every 15s (EVM by block, Solana by address)
 ```
-
-Note: the test account has minimal Hoodi ETH. Faucet at https://hoodi-faucet.pk910.de if needed.

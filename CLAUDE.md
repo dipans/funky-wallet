@@ -42,6 +42,7 @@ funky-wallet/
 | Forge | EVM adapter | `evm-chain-adapter/` | :9090 |
 | Forge | Solana adapter | `solana-chain-adapter/` | :9091 |
 | Scout | E2E tests | `funky-wallet-e2e/` | — |
+| Grid | Infra / K8s+Istio | `../funky-infra/` | — |
 
 ## System architecture
 
