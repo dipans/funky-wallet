@@ -1,0 +1,26 @@
+services:
+  wallet-api-service:
+    image: ghcr.io/dipans/wallet-api-service:latest
+    replicas: 2
+    containerPort: 8080
+    servicePort: 8080
+    healthCheck:
+      type: http
+      path: /api/v1/health
+    startupDelay: 40         # Spring Boot + Liquibase migrations take ~30s
+    resources:
+      requests: { cpu: 256m, memory: 512Mi }
+      limits:   { cpu: 1000m, memory: 1Gi }
+    env:
+      SPRING_PROFILES_ACTIVE: local
+      SIGNING_COORDINATOR_URL: http://signing-coordinator:9000
+      EVM_CHAIN_ADAPTER_URL: http://evm-chain-adapter:9090
+      SOLANA_CHAIN_ADAPTER_URL: http://solana-chain-adapter:9091
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/funkywallet_dev
+    secretEnv:
+      SPRING_DATASOURCE_USERNAME: postgresUsername
+      SPRING_DATASOURCE_PASSWORD: postgresPassword
+    hpa:
+      enabled: false
+    pdb:
+      enabled: false

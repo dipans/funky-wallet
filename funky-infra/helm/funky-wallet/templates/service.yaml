@@ -1,0 +1,20 @@
+{{- range $name, $svc := .Values.services }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "funky-wallet.labels" $ | nindent 4 }}
+    app.kubernetes.io/name: {{ $name }}
+spec:
+  selector:
+    {{- include "funky-wallet.selectorLabels" (dict "name" $name) | nindent 4 }}
+  ports:
+    - port: {{ $svc.servicePort }}
+      targetPort: {{ $svc.containerPort }}
+  {{- if eq $name "postgres" }}
+  clusterIP: None
+  {{- end }}
+{{- end }}

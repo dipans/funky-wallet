@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+  <!--
+    Solana durable nonce support.
+    Each Solana wallet needs an associated nonce account on-chain so that
+    MPC signing rounds don't race against the 80-second recent-blockhash window.
+    The nonce_account stores the on-chain address of that account.
+  -->
+  <changeSet id="008-solana-nonce-account" author="forge">
+    <addColumn tableName="accounts">
+      <column name="nonce_account" type="VARCHAR(64)">
+        <constraints nullable="true"/>
+      </column>
+    </addColumn>
+    <rollback>
+      <dropColumn tableName="accounts" columnName="nonce_account"/>
+    </rollback>
+  </changeSet>
+
+</databaseChangeLog>

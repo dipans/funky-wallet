@@ -1,0 +1,131 @@
+.page { max-width: 680px; display: flex; flex-direction: column; gap: 20px; }
+
+.title { font-size: 28px; font-weight: 800; margin-bottom: 4px; }
+
+.section { display: flex; flex-direction: column; gap: 12px; }
+
+.sectionTitle {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+}
+
+.optionGrid { display: flex; gap: 8px; }
+
+.optBtn {
+  flex: 1;
+  padding: 10px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.optBtn:hover { border-color: var(--accent); color: var(--text-primary); }
+.optBtnActive { border-color: var(--accent) !important; color: var(--accent) !important; background: var(--accent-dim) !important; }
+
+.empty { font-size: 13px; color: var(--text-muted); }
+
+.accountRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition);
+}
+.accountRow:hover { border-color: var(--accent); }
+.accountRowActive { border-color: var(--accent); background: var(--accent-dim); }
+
+.accNetwork {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 2px;
+}
+
+.activePill {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--accent-dim);
+  padding: 3px 8px;
+  border-radius: 100px;
+}
+
+.about { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+
+.divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 0;
+}
+
+.toggleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+}
+
+.toggleLabel {
+  font-size: 14px;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lockIcon { font-size: 12px; }
+
+/* Toggle switch */
+.toggle {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  border-radius: 100px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: var(--transition);
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.toggleOn {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.toggleDisabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.toggleThumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--text-secondary);
+  transition: var(--transition);
+}
+
+.toggleOn .toggleThumb {
+  left: calc(100% - 18px);
+  background: #0a0a0a;
+}

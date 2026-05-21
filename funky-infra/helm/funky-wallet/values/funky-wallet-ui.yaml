@@ -1,0 +1,20 @@
+services:
+  funky-wallet-ui:
+    image: ghcr.io/dipans/funky-wallet-ui:latest
+    replicas: 2
+    containerPort: 80        # nginx listens on 80
+    servicePort: 3000        # exposed as :3000 on the ClusterIP service
+    healthCheck:
+      type: http
+      path: /
+    resources:
+      requests: { cpu: 50m, memory: 128Mi }
+      limits:   { cpu: 200m, memory: 256Mi }
+    secretEnv:
+      VITE_AUTH0_DOMAIN: auth0Domain
+      VITE_AUTH0_CLIENT_ID: auth0ClientId
+      VITE_AUTH0_AUDIENCE: auth0Audience
+    hpa:
+      enabled: false
+    pdb:
+      enabled: false

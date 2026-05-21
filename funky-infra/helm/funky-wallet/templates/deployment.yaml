@@ -1,0 +1,80 @@
+{{- range $name, $svc := .Values.services }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "funky-wallet.labels" $ | nindent 4 }}
+    app.kubernetes.io/name: {{ $name }}
+spec:
+  replicas: {{ $svc.replicas | default 1 }}
+  selector:
+    matchLabels:
+      {{- include "funky-wallet.selectorLabels" (dict "name" $name) | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "funky-wallet.selectorLabels" (dict "name" $name) | nindent 8 }}
+    spec:
+      containers:
+        - name: {{ $name }}
+          image: {{ $svc.image }}
+          imagePullPolicy: {{ $svc.imagePullPolicy | default $.Values.imagePullPolicy | default "IfNotPresent" }}
+          ports:
+            - containerPort: {{ $svc.containerPort }}
+          {{- if or $svc.env $svc.secretEnv }}
+          env:
+            {{- range $key, $val := $svc.env }}
+            - name: {{ $key }}
+              value: {{ $val | quote }}
+            {{- end }}
+            {{- range $key, $secretKey := $svc.secretEnv }}
+            - name: {{ $key }}
+              valueFrom:
+                secretKeyRef:
+                  name: funky-wallet-secrets
+                  key: {{ $secretKey | kebabcase }}
+            {{- end }}
+          {{- end }}
+          resources:
+            requests:
+              cpu: {{ $svc.resources.requests.cpu }}
+              memory: {{ $svc.resources.requests.memory }}
+            limits:
+              cpu: {{ $svc.resources.limits.cpu }}
+              memory: {{ $svc.resources.limits.memory }}
+          {{- if $svc.healthCheck }}
+          readinessProbe:
+            {{- if eq $svc.healthCheck.type "http" }}
+            httpGet:
+              path: {{ $svc.healthCheck.path }}
+              port: {{ $svc.containerPort }}
+            {{- else if eq $svc.healthCheck.type "exec" }}
+            exec:
+              command: {{ $svc.healthCheck.command | toJson }}
+            {{- else if eq $svc.healthCheck.type "tcp" }}
+            tcpSocket:
+              port: {{ $svc.containerPort }}
+            {{- end }}
+            initialDelaySeconds: {{ $svc.startupDelay | default 10 }}
+            periodSeconds: 10
+            failureThreshold: 5
+          livenessProbe:
+            {{- if eq $svc.healthCheck.type "http" }}
+            httpGet:
+              path: {{ $svc.healthCheck.path }}
+              port: {{ $svc.containerPort }}
+            {{- else if eq $svc.healthCheck.type "exec" }}
+            exec:
+              command: {{ $svc.healthCheck.command | toJson }}
+            {{- else if eq $svc.healthCheck.type "tcp" }}
+            tcpSocket:
+              port: {{ $svc.containerPort }}
+            {{- end }}
+            initialDelaySeconds: {{ add ($svc.startupDelay | default 10) 20 }}
+            periodSeconds: 15
+            failureThreshold: 3
+          {{- end }}
+{{- end }}

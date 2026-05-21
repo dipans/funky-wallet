@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+  <changeSet id="001" author="forge">
+
+    <createTable tableName="accounts">
+      <column name="id" type="uuid">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="address" type="varchar(128)">
+        <constraints nullable="false" unique="true"/>
+      </column>
+      <column name="public_key" type="varchar(256)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="network" type="varchar(16)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="created_at" type="timestamp" defaultValueComputed="now()">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+
+    <createTable tableName="transactions">
+      <column name="id" type="uuid">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="hash" type="varchar(128)"/>
+      <column name="from_address" type="varchar(128)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="to_address" type="varchar(128)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="amount" type="decimal(36,18)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="symbol" type="varchar(10)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="network" type="varchar(16)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="status" type="varchar(16)" defaultValue="PENDING">
+        <constraints nullable="false"/>
+      </column>
+      <column name="created_at" type="timestamp" defaultValueComputed="now()">
+        <constraints nullable="false"/>
+      </column>
+      <column name="confirmed_at" type="timestamp"/>
+    </createTable>
+
+    <createIndex tableName="accounts" indexName="idx_accounts_network">
+      <column name="network"/>
+    </createIndex>
+    <createIndex tableName="transactions" indexName="idx_transactions_from_address">
+      <column name="from_address"/>
+    </createIndex>
+    <createIndex tableName="transactions" indexName="idx_transactions_status">
+      <column name="status"/>
+    </createIndex>
+    <createIndex tableName="transactions" indexName="idx_transactions_created_at">
+      <column name="created_at" descending="true"/>
+    </createIndex>
+
+  </changeSet>
+
+</databaseChangeLog>

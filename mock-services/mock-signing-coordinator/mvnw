@@ -1,0 +1,61 @@
+#!/bin/sh
+# Maven Wrapper script for POSIX systems
+# ----------------------------------------------------------------------------
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements. See the NOTICE file for additional
+# information.
+# ----------------------------------------------------------------------------
+
+set -e
+
+# Find the project basedir (directory containing .mvn)
+find_maven_basedir() {
+  if [ -z "$1" ]; then
+    echo "Path not specified to find_maven_basedir" 1>&2
+    return 1
+  fi
+  basedir="$1"
+  wdir="$basedir"
+  while [ "$wdir" != '/' ]; do
+    if [ -d "$wdir"/.mvn ]; then
+      basedir=$wdir
+      break
+    fi
+    wdir=$(dirname "$wdir")
+  done
+  printf '%s' "$(realpath "$basedir")"
+}
+
+MVN_CMD=mvn
+if command -v mvn >/dev/null 2>&1; then
+  exec mvn "$@"
+fi
+
+# Fall back to downloading via wrapper jar
+MAVEN_PROJECTBASEDIR=$(find_maven_basedir "$(pwd)")
+MAVEN_WRAPPER_JAR="$MAVEN_PROJECTBASEDIR/.mvn/wrapper/maven-wrapper.jar"
+MAVEN_WRAPPER_PROPERTIES="$MAVEN_PROJECTBASEDIR/.mvn/wrapper/maven-wrapper.properties"
+
+if [ -r "$MAVEN_WRAPPER_PROPERTIES" ]; then
+  # shellcheck disable=SC2002
+  DISTRIBUTION_URL=$(grep distributionUrl "$MAVEN_WRAPPER_PROPERTIES" | cut -d= -f2-)
+fi
+
+WRAPPER_URL=$(grep wrapperUrl "$MAVEN_WRAPPER_PROPERTIES" 2>/dev/null | cut -d= -f2-)
+
+if [ ! -f "$MAVEN_WRAPPER_JAR" ]; then
+  echo "Downloading Maven Wrapper jar from $WRAPPER_URL"
+  if command -v curl >/dev/null 2>&1; then
+    curl -o "$MAVEN_WRAPPER_JAR" "$WRAPPER_URL" -f
+  elif command -v wget >/dev/null 2>&1; then
+    wget -O "$MAVEN_WRAPPER_JAR" "$WRAPPER_URL"
+  else
+    echo "curl or wget required to download Maven Wrapper" 1>&2
+    exit 1
+  fi
+fi
+
+exec java \
+  -jar "$MAVEN_WRAPPER_JAR" \
+  -Dmaven.multiModuleProjectDirectory="$MAVEN_PROJECTBASEDIR" \
+  "$@"

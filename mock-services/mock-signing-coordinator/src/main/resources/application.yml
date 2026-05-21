@@ -1,0 +1,18 @@
+server:
+  port: ${PORT:9000}
+
+spring:
+  application:
+    name: mock-signing-coordinator
+
+logging:
+  level:
+    com.funkywallet: DEBUG
+
+mnemonic:
+  encryption:
+    key: ${MNEMONIC_ENCRYPTION_KEY:dGVzdGtleXRlc3RrZXl0ZXN0a2V5dGVzdGtleXRlc3Q=}
+
+geth:
+  chain:
+    id: ${GETH_CHAIN_ID:1337}

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+  <changeSet id="002-test-account" author="forge" context="local,e2e">
+    <preConditions onFail="MARK_RAN">
+      <sqlCheck expectedResult="0">
+        SELECT COUNT(*) FROM accounts WHERE address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
+      </sqlCheck>
+    </preConditions>
+
+    <insert tableName="accounts">
+      <column name="id" value="00000000-0000-0000-0000-000000000001"/>
+      <column name="address" value="0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"/>
+      <column name="public_key" value="0x02e9a7c9d0e5a7e6b1d4c2e1f0a3b2c5d4e3f2a1b0c9d8e7f6a5b4c3d2e1f0a2b3"/>
+      <column name="network" value="ETHEREUM"/>
+      <column name="created_at" valueDate="now()"/>
+    </insert>
+
+    <insert tableName="transactions">
+      <column name="id" value="00000000-0000-0000-0000-000000000101"/>
+      <column name="hash" value="0xabc1000000000000000000000000000000000000000000000000000000000001"/>
+      <column name="from_address" value="0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"/>
+      <column name="to_address" value="0x70997970C51812dc3A010C7d01b50e0d17dc79C8"/>
+      <column name="amount" value="0.5"/>
+      <column name="symbol" value="ETH"/>
+      <column name="network" value="ETHEREUM"/>
+      <column name="status" value="CONFIRMED"/>
+      <column name="created_at" valueDate="now() - interval '2 hours'"/>
+      <column name="confirmed_at" valueDate="now() - interval '1 hour 58 minutes'"/>
+    </insert>
+
+    <insert tableName="transactions">
+      <column name="id" value="00000000-0000-0000-0000-000000000102"/>
+      <column name="hash" value="0xabc2000000000000000000000000000000000000000000000000000000000002"/>
+      <column name="from_address" value="0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"/>
+      <column name="to_address" value="0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC"/>
+      <column name="amount" value="1.25"/>
+      <column name="symbol" value="ETH"/>
+      <column name="network" value="ETHEREUM"/>
+      <column name="status" value="CONFIRMED"/>
+      <column name="created_at" valueDate="now() - interval '1 hour'"/>
+      <column name="confirmed_at" valueDate="now() - interval '58 minutes'"/>
+    </insert>
+
+    <insert tableName="transactions">
+      <column name="id" value="00000000-0000-0000-0000-000000000103"/>
+      <column name="hash" value="0xabc3000000000000000000000000000000000000000000000000000000000003"/>
+      <column name="from_address" value="0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"/>
+      <column name="to_address" value="0x70997970C51812dc3A010C7d01b50e0d17dc79C8"/>
+      <column name="amount" value="0.1"/>
+      <column name="symbol" value="ETH"/>
+      <column name="network" value="ETHEREUM"/>
+      <column name="status" value="FAILED"/>
+      <column name="created_at" valueDate="now() - interval '30 minutes'"/>
+    </insert>
+  </changeSet>
+
+</databaseChangeLog>

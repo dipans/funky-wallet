@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+  <!--
+    Replace the nonce_account column (008) with a TEXT column that stores
+    network-specific details as a JSON string.
+
+    Keeps accounts table network-agnostic — no null EVM columns for Solana fields.
+
+    Examples:
+      Solana:  { "nonceAccount": "...", "nonceAuthority": "..." }
+      EVM:     null
+      Bitcoin: { "xpub": "...", "addressType": "p2wpkh" }  (future)
+  -->
+
+  <changeSet id="009-drop-nonce-account-col" author="forge">
+    <dropColumn tableName="accounts" columnName="nonce_account"/>
+    <rollback>
+      <addColumn tableName="accounts">
+        <column name="nonce_account" type="VARCHAR(64)"/>
+      </addColumn>
+    </rollback>
+  </changeSet>
+
+  <changeSet id="009-add-chain-details" author="forge">
+    <addColumn tableName="accounts">
+      <column name="chain_details" type="TEXT">
+        <constraints nullable="true"/>
+      </column>
+    </addColumn>
+    <rollback>
+      <dropColumn tableName="accounts" columnName="chain_details"/>
+    </rollback>
+  </changeSet>
+
+</databaseChangeLog>

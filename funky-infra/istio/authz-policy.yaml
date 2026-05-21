@@ -1,0 +1,24 @@
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: require-jwt
+  namespace: funky-wallet
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: wallet-api-service
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            # Only accept requests that carry a validated JWT principal.
+            # Istio validates the JWT against the RequestAuthentication above
+            # before this policy is evaluated.
+            requestPrincipals: ["*"]
+      to:
+        - operation:
+            paths: ["/api/*"]
+    # Allow health checks without a JWT (from any source, including k8s probes)
+    - to:
+        - operation:
+            paths: ["/api/v1/health"]

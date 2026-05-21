@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+  <changeSet id="007-add-block-hash-to-transactions" author="forge">
+    <addColumn tableName="transactions">
+      <column name="block_hash" type="varchar(66)"/>
+    </addColumn>
+  </changeSet>
+
+  <changeSet id="007-create-block-sync-state" author="forge">
+    <createTable tableName="block_sync_state">
+      <column name="id" type="uuid">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="network" type="varchar(32)">
+        <constraints nullable="false" unique="true"/>
+      </column>
+      <column name="last_processed_block" type="bigint" defaultValueNumeric="0">
+        <constraints nullable="false"/>
+      </column>
+      <column name="last_processed_block_hash" type="varchar(66)"/>
+      <column name="updated_at" type="timestamp" defaultValueComputed="now()">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+  </changeSet>
+
+</databaseChangeLog>

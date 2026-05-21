@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+  <!--
+    Per-address sync state for the Solana block watcher.
+    Unlike EVM (one block stream per network), Solana uses per-address signature history.
+    Each row tracks the last seen signature for one wallet address.
+  -->
+  <changeSet id="010-create-solana-sync-state" author="forge">
+    <createTable tableName="solana_sync_state">
+      <column name="address" type="VARCHAR(64)">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <!-- Most recent finalized signature processed; null = never seen any -->
+      <column name="last_signature" type="VARCHAR(128)">
+        <constraints nullable="true"/>
+      </column>
+      <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="NOW()">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+    <rollback>
+      <dropTable tableName="solana_sync_state"/>
+    </rollback>
+  </changeSet>
+
+</databaseChangeLog>

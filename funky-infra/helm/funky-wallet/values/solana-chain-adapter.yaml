@@ -1,0 +1,17 @@
+services:
+  solana-chain-adapter:
+    image: ghcr.io/dipans/solana-chain-adapter:latest
+    replicas: 1
+    containerPort: 9091
+    servicePort: 9091
+    healthCheck:
+      type: http
+      path: /health
+    startupDelay: 30         # Spring Boot takes ~16s
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits:   { cpu: 500m, memory: 512Mi }
+    hpa:
+      enabled: false
+    pdb:
+      enabled: false

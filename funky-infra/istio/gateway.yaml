@@ -1,0 +1,45 @@
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: funky-wallet-gateway
+  namespace: funky-wallet
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 443
+        name: https
+        protocol: HTTPS
+      tls:
+        mode: SIMPLE
+        credentialName: funky-wallet-tls   # TLS cert stored in istio-system Secret
+      hosts:
+        - "wallet.yourdomain.com"          # replace with real domain
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: funky-wallet-vs
+  namespace: funky-wallet
+spec:
+  hosts:
+    - "wallet.yourdomain.com"
+  gateways:
+    - funky-wallet-gateway
+  http:
+    # /api/* → wallet-api-service
+    - match:
+        - uri:
+            prefix: /api/
+      route:
+        - destination:
+            host: wallet-api-service
+            port:
+              number: 8080
+    # /* → funky-wallet-ui
+    - route:
+        - destination:
+            host: funky-wallet-ui
+            port:
+              number: 3000

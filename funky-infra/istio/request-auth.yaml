@@ -1,0 +1,15 @@
+apiVersion: security.istio.io/v1beta1
+kind: RequestAuthentication
+metadata:
+  name: auth0-jwt
+  namespace: funky-wallet
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: wallet-api-service
+  jwtRules:
+    - issuer: "https://YOUR_AUTH0_DOMAIN/"        # replace with real Auth0 domain
+      jwksUri: "https://YOUR_AUTH0_DOMAIN/.well-known/jwks.json"
+      audiences:
+        - "https://api.funkywallet.io"
+      forwardOriginalToken: true   # wallet-api-service reads the JWT sub claim

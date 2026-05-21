@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+  <changeSet id="006-add-user-id" author="forge">
+    <addColumn tableName="accounts">
+      <column name="user_id" type="varchar(128)"/>
+    </addColumn>
+    <createIndex tableName="accounts" indexName="idx_accounts_user_id">
+      <column name="user_id"/>
+    </createIndex>
+  </changeSet>
+
+  <!-- Link the local test account to the real Auth0 user -->
+  <changeSet id="006-link-local-test-account" author="forge" context="local" runOnChange="true">
+    <update tableName="accounts">
+      <column name="user_id" value="auth0|65a1da518dea5e613654af0d"/>
+      <where>address = '0xae6e338abeeda17b762e846b061ac67b880201ca'</where>
+    </update>
+  </changeSet>
+
+  <!-- Link the e2e test account to the fixed e2e service user -->
+  <changeSet id="006-link-e2e-test-account" author="forge" context="e2e" runOnChange="true">
+    <update tableName="accounts">
+      <column name="user_id" value="e2e|test-user"/>
+      <where>address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'</where>
+    </update>
+  </changeSet>
+
+</databaseChangeLog>

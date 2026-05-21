@@ -1,0 +1,25 @@
+# Chart defaults — minimal structural baseline.
+# Per-service configuration lives in values/<service>.yaml.
+# Environment overrides live in values-dev.yaml / values-prod.yaml.
+# Deploy with:
+#   helm upgrade --install funky-wallet ./helm/funky-wallet \
+#     -f values/postgres.yaml \
+#     -f values/wallet-api-service.yaml \
+#     -f values/funky-wallet-ui.yaml \
+#     -f values/signing-coordinator.yaml \
+#     -f values/evm-chain-adapter.yaml \
+#     -f values/solana-chain-adapter.yaml \
+#     -f values-dev.yaml   # or values-prod.yaml
+#     --set secrets.postgresPassword="$POSTGRES_PASSWORD"
+
+namespace: funky-wallet
+
+secrets:
+  postgresUsername: funky
+  postgresPassword: ""          # always inject via --set or CI secret
+  auth0Domain: ""
+  auth0ClientId: ""
+  auth0Audience: https://api.funkywallet.io
+
+# services is populated by merging per-service values files at deploy time
+services: {}

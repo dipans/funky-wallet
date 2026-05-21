@@ -1,0 +1,65 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: funkywallet-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: funkywallet_dev
+      POSTGRES_USER: funky
+      POSTGRES_PASSWORD: funky
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U funky -d funkywallet_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  adminer:
+    image: adminer:latest
+    container_name: funkywallet-adminer
+    restart: unless-stopped
+    ports:
+      - "8888:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # Real EVM chain adapter pointing to Hoodi testnet.
+  # Override HOODI_RPC_URL with your own Infura/Alchemy endpoint if needed.
+  evm-chain-adapter:
+    build:
+      context: ../evm-chain-adapter
+    container_name: funkywallet-evm-adapter-dev
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    environment:
+      GETH_RPC_URL: ${HOODI_RPC_URL:-https://rpc.hoodi.ethpandaops.io}
+      GETH_CHAIN_ID: 560048
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:9090/health | grep -q UP"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Solana chain adapter pointing to Solana devnet.
+  solana-chain-adapter:
+    build:
+      context: ../solana-chain-adapter
+    container_name: funkywallet-solana-adapter-dev
+    restart: unless-stopped
+    ports:
+      - "9091:9091"
+    environment:
+      SOLANA_RPC_URL: ${SOLANA_RPC_URL:-https://api.devnet.solana.com}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:9091/health | grep -q UP"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

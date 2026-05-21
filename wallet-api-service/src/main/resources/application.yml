@@ -1,0 +1,101 @@
+spring:
+  application:
+    name: wallet-api-service
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/funkywallet_dev}
+    username: ${DB_USER:funky}
+    password: ${DB_PASS:funky}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.xml
+    enabled: true
+    contexts: local
+
+server:
+  port: 8080
+
+signing:
+  coordinator:
+    url: ${SIGNING_COORDINATOR_URL:http://localhost:9000}
+
+chain:
+  adapter:
+    evm:
+      url: ${EVM_CHAIN_ADAPTER_URL:http://localhost:9090}
+    solana:
+      url: ${SOLANA_CHAIN_ADAPTER_URL:http://localhost:9091}
+
+blockwatcher:
+  interval-ms: 15000
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      signing:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+      chain:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when_authorized
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  level:
+    com.funkywallet: INFO
+    org.springframework.web.filter.CommonsRequestLoggingFilter: DEBUG
+
+---
+# IT / unit tests — H2 in-memory, Liquibase runs all changesets
+spring:
+  config:
+    activate:
+      on-profile: test
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: none
+    database-platform: org.hibernate.dialect.H2Dialect
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.xml
+
+---
+# e2e tests — Postgres in Docker, full stack
+spring:
+  config:
+    activate:
+      on-profile: e2e
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/funkywallet_dev}
+    username: ${DB_USER:funky}
+    password: ${DB_PASS:funky}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.xml
+    contexts: e2e

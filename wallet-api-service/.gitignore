@@ -1,0 +1,7 @@
+target/
+.mvn/wrapper/maven-wrapper.jar
+!.mvn/wrapper/maven-wrapper.properties
+.env
+.DS_Store
+*.log
+test-results/

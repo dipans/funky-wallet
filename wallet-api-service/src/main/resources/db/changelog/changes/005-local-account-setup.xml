@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+  <!-- Remove old Hardhat test account and any runtime-created dummy accounts from local DB -->
+  <changeSet id="005-local-cleanup" author="forge" context="local" runOnChange="true">
+    <delete tableName="transactions">
+      <where>from_address IN (
+        '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+        '0x017eac76cac3a1c3bc506d65f2998dac9af07729',
+        '0x08900e7a84e0a63302074d9671820bc94a267d31'
+      )</where>
+    </delete>
+    <delete tableName="accounts">
+      <where>address IN (
+        '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+        '0x017eac76cac3a1c3bc506d65f2998dac9af07729',
+        '0x08900e7a84e0a63302074d9671820bc94a267d31'
+      )</where>
+    </delete>
+  </changeSet>
+
+  <!-- Seed the real local test account (Hoodi testnet) -->
+  <changeSet id="005-local-test-account" author="forge" context="local">
+    <preConditions onFail="MARK_RAN">
+      <sqlCheck expectedResult="0">
+        SELECT COUNT(*) FROM accounts WHERE address = '0xae6e338abeeda17b762e846b061ac67b880201ca'
+      </sqlCheck>
+    </preConditions>
+    <insert tableName="accounts">
+      <column name="id"           value="00000000-0000-0000-0000-000000000002"/>
+      <column name="address"      value="0xae6e338abeeda17b762e846b061ac67b880201ca"/>
+      <column name="public_key"   value="0x"/>
+      <column name="network"      value="ETHEREUM"/>
+      <column name="chain_id"     valueNumeric="560048"/>
+      <column name="chain_name"   value="Ethereum Hoodi"/>
+      <column name="network_type" value="EVM"/>
+      <column name="environment"  value="TESTNET"/>
+      <column name="created_at"   valueDate="now()"/>
+    </insert>
+  </changeSet>
+
+</databaseChangeLog>

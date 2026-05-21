@@ -1,0 +1,55 @@
+.page { max-width: 1000px; }
+
+.title { font-size: 28px; font-weight: 800; margin-bottom: 20px; }
+
+.filters { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+
+.filterActive {
+  background: var(--accent-dim) !important;
+  color: var(--accent) !important;
+  border-color: var(--accent) !important;
+}
+
+.empty { font-size: 14px; color: var(--text-muted); }
+
+.list { display: flex; flex-direction: column; gap: 10px; }
+
+.txCard { display: flex; flex-direction: column; gap: 8px; }
+
+.txHeader { display: flex; align-items: center; justify-content: space-between; }
+
+.dir { font-weight: 700; font-size: 13px; }
+.out { color: var(--error); }
+.in  { color: var(--success); }
+
+.txAmount { font-size: 22px; font-weight: 700; }
+
+.symbol { font-size: 14px; color: var(--text-secondary); }
+
+.txMeta {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.txFooter {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.hash { color: var(--text-muted); }
+
+.explorerLink {
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 11px;
+  font-weight: 600;
+  transition: var(--transition);
+}
+.explorerLink:hover { opacity: 0.8; }

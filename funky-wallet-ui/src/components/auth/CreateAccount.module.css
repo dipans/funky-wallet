@@ -1,0 +1,134 @@
+.page { max-width: 680px; }
+
+.title {
+  font-size: 28px;
+  font-weight: 800;
+  margin-bottom: 24px;
+}
+
+.sub {
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+.card { display: flex; flex-direction: column; gap: 16px; }
+
+.networkGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.networkBtn {
+  padding: 14px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.networkBtn:hover { border-color: var(--accent); color: var(--text-primary); }
+.networkBtnActive { border-color: var(--accent) !important; color: var(--accent) !important; background: var(--accent-dim) !important; }
+
+.mnemonicBox {
+  position: relative;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 20px;
+  cursor: pointer;
+  min-height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.mnemonicBlurred .mnemonicWords { filter: blur(8px); user-select: none; }
+
+.revealHint {
+  position: absolute;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  z-index: 1;
+}
+
+.mnemonicWords {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--text-primary);
+  word-spacing: 8px;
+}
+
+.wordCount {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: -8px;
+}
+
+.checklist { display: flex; flex-direction: column; gap: 12px; }
+
+.checkItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.checkItem input[type=checkbox] { margin-top: 2px; accent-color: var(--accent); }
+
+/* Chain picker */
+.chainList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chainBtn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  text-align: left;
+}
+.chainBtn:hover { border-color: var(--accent); color: var(--text-primary); }
+.chainBtnActive { border-color: var(--accent) !important; color: var(--accent) !important; background: var(--accent-dim) !important; }
+
+.chainBtnName { flex: 1; }
+
+.envBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 100px;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  flex-shrink: 0;
+}
+
+.chainActions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}

@@ -1,9 +1,22 @@
 .DS_Store
-funky-wallet-ui/
-wallet-api-service/
-mock-services/
-funky-wallet-e2e/
-evm-chain-adapter/
-solana-chain-adapter/target/
 .pids/
 .logs/
+
+# Java build output
+wallet-api-service/target/
+evm-chain-adapter/target/
+solana-chain-adapter/target/
+mock-services/mock-signing-coordinator/target/
+mock-services/mock-mpc-node-1/target/
+mock-services/mock-mpc-node-2/target/
+mock-services/mock-mpc-node-3/target/
+wallet-api-service/test-results/
+
+# Node / UI
+funky-wallet-ui/node_modules/
+funky-wallet-ui/dist/
+funky-wallet-e2e/node_modules/
+
+# Playwright
+funky-wallet-e2e/test-results/
+funky-wallet-e2e/playwright-report/

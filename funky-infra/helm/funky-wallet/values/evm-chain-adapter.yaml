@@ -1,0 +1,19 @@
+services:
+  evm-chain-adapter:
+    image: ghcr.io/dipans/evm-chain-adapter:latest
+    replicas: 1
+    containerPort: 9090
+    servicePort: 9090
+    healthCheck:
+      type: http
+      path: /health
+    startupDelay: 30         # Spring Boot takes ~16s
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits:   { cpu: 500m, memory: 512Mi }
+    env:
+      ETH_RPC_URL: http://geth-node:8545
+    hpa:
+      enabled: false
+    pdb:
+      enabled: false

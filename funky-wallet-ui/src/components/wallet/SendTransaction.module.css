@@ -1,0 +1,76 @@
+.page { max-width: 680px; }
+
+.title {
+  font-size: 28px;
+  font-weight: 800;
+  margin-bottom: 24px;
+}
+
+.card { display: flex; flex-direction: column; gap: 16px; }
+
+.mnemonicInput { resize: none; }
+
+.mnemonicHint {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+.fromBox {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.fromLabel {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.fromChain {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.fromAddress {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+  word-break: break-all;
+}
+
+.error {
+  font-size: 13px;
+  color: var(--error);
+  padding: 10px 14px;
+  background: rgba(255, 77, 77, 0.08);
+  border: 1px solid rgba(255, 77, 77, 0.2);
+  border-radius: var(--radius-sm);
+}
+
+.successCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+  padding: 40px 24px;
+}
+
+.successIcon {
+  font-size: 48px;
+  color: var(--accent);
+  font-weight: 800;
+}
+
+.successTitle { font-size: 22px; font-weight: 800; }
+
+.successSub { font-size: 14px; color: var(--text-secondary); margin-bottom: 8px; }

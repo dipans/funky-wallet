@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wallet-api-service
+  namespace: funky-wallet
+  labels:
+    app.kubernetes.io/name: wallet-api-service
+    app.kubernetes.io/part-of: funky-wallet
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: wallet-api-service
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: wallet-api-service
+        app.kubernetes.io/part-of: funky-wallet
+    spec:
+      containers:
+        - name: wallet-api-service
+          image: ghcr.io/dipans/wallet-api-service:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: local
+            - name: SIGNING_COORDINATOR_URL
+              value: http://signing-coordinator:9000
+            - name: EVM_CHAIN_ADAPTER_URL
+              value: http://evm-chain-adapter:9090
+            - name: SOLANA_CHAIN_ADAPTER_URL
+              value: http://solana-chain-adapter:9091
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://postgres:5432/funkywallet_dev
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: funky-wallet-secrets
+                  key: postgres-username
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: funky-wallet-secrets
+                  key: postgres-password
+          resources:
+            requests:
+              cpu: 256m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+          readinessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 5
+          livenessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wallet-api-service
+  namespace: funky-wallet
+  labels:
+    app.kubernetes.io/name: wallet-api-service
+    app.kubernetes.io/part-of: funky-wallet
+spec:
+  selector:
+    app.kubernetes.io/name: wallet-api-service
+  ports:
+    - port: 8080
+      targetPort: 8080

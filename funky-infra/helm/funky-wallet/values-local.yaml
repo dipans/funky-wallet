@@ -1,0 +1,16 @@
+# Local Docker Desktop override — uses images from local registry.
+# The registry runs on the host at localhost:5001.
+# Docker Desktop k8s nodes reach the host via host.docker.internal.
+imagePullPolicy: IfNotPresent
+
+services:
+  wallet-api-service:
+    image: host.docker.internal:5001/dipans/wallet-api-service:latest
+  funky-wallet-ui:
+    image: host.docker.internal:5001/dipans/funky-wallet-ui:latest
+  evm-chain-adapter:
+    image: host.docker.internal:5001/dipans/evm-chain-adapter:latest
+  solana-chain-adapter:
+    image: host.docker.internal:5001/dipans/solana-chain-adapter:latest
+  signing-coordinator:
+    image: host.docker.internal:5001/dipans/mock-signing-coordinator:latest

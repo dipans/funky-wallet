@@ -1,0 +1,21 @@
+# Prod environment overrides.
+# Applied ON TOP of per-service values files.
+# Use: helm upgrade ... -f values/wallet-api-service.yaml ... -f values-prod.yaml
+services:
+  wallet-api-service:
+    replicas: 2
+    hpa:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 6
+      cpuTargetUtilization: 70
+    pdb:
+      enabled: true
+      minAvailable: 1
+  funky-wallet-ui:
+    replicas: 2
+    hpa:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 4
+      cpuTargetUtilization: 70

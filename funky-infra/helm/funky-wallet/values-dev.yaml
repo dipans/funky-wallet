@@ -1,0 +1,8 @@
+# Dev environment overrides.
+# Applied ON TOP of per-service values files.
+# Use: helm upgrade ... -f values/wallet-api-service.yaml ... -f values-dev.yaml
+services:
+  wallet-api-service:
+    replicas: 1
+  funky-wallet-ui:
+    replicas: 1

@@ -1,0 +1,10 @@
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: funky-wallet
+spec:
+  # STRICT mTLS for all pods in the funky-wallet namespace.
+  # No plaintext traffic between services — Istio sidecars handle cert rotation.
+  mtls:
+    mode: STRICT

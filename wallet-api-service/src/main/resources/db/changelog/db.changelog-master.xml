@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+  <include file="db/changelog/changes/001-initial-schema.xml"/>
+  <include file="db/changelog/changes/002-test-data.xml"/>
+  <include file="db/changelog/changes/003-account-chain-fields.xml"/>
+  <include file="db/changelog/changes/005-local-account-setup.xml"/>
+  <include file="db/changelog/changes/006-user-id.xml"/>
+  <include file="db/changelog/changes/007-block-watcher.xml"/>
+  <include file="db/changelog/changes/008-solana-nonce-account.xml"/>
+  <include file="db/changelog/changes/009-chain-details.xml"/>
+  <include file="db/changelog/changes/010-solana-sync-state.xml"/>
+
+</databaseChangeLog>

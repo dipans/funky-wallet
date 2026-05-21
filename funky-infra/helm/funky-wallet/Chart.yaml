@@ -1,0 +1,6 @@
+apiVersion: v2
+name: funky-wallet
+description: Full-stack MPC wallet — UI + API + signing + chain adapters
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

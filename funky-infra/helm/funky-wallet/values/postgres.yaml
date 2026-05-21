@@ -1,0 +1,24 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    replicas: 1
+    containerPort: 5432
+    servicePort: 5432
+    healthCheck:
+      type: exec
+      command: [pg_isready, -U, funky, -d, funkywallet_dev]
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits:   { cpu: 500m, memory: 512Mi }
+    env:
+      POSTGRES_DB: funkywallet_dev
+    secretEnv:
+      POSTGRES_USER: postgresUsername
+      POSTGRES_PASSWORD: postgresPassword
+    persistence:
+      enabled: true
+      size: 5Gi
+    hpa:
+      enabled: false
+    pdb:
+      enabled: false

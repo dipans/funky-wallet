@@ -1,0 +1,6 @@
+target/
+*/target/
+.mvn/wrapper/maven-wrapper.jar
+*/.mvn/wrapper/maven-wrapper.jar
+.DS_Store
+*.log

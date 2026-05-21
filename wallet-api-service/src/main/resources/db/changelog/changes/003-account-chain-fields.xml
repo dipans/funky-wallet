@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+  <changeSet id="003-account-chain-fields" author="forge">
+    <addColumn tableName="accounts">
+      <column name="chain_id"    type="integer"     defaultValue="0"/>
+      <column name="chain_name"  type="varchar(64)"  defaultValue="Unknown"/>
+      <column name="network_type" type="varchar(16)" defaultValue="EVM"/>
+      <column name="environment" type="varchar(16)"  defaultValue="LOCAL"/>
+    </addColumn>
+  </changeSet>
+
+  <changeSet id="003-backfill-test-account" author="forge" context="local" runOnChange="true">
+    <update tableName="accounts">
+      <column name="chain_id"    valueNumeric="560048"/>
+      <column name="chain_name"  value="Ethereum Hoodi"/>
+      <column name="network_type" value="EVM"/>
+      <column name="environment"  value="TESTNET"/>
+      <where>address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'</where>
+    </update>
+  </changeSet>
+
+  <changeSet id="003-backfill-test-account-e2e" author="forge" context="e2e" runOnChange="true">
+    <update tableName="accounts">
+      <column name="chain_id"    valueNumeric="1337"/>
+      <column name="chain_name"  value="Ethereum Local"/>
+      <column name="network_type" value="EVM"/>
+      <column name="environment"  value="LOCAL"/>
+      <where>address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'</where>
+    </update>
+  </changeSet>
+
+</databaseChangeLog>
