@@ -1,0 +1,172 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  # ── Detect which services changed ─────────────────────────────────────────
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      wallet-api:      ${{ steps.filter.outputs.wallet-api }}
+      ui:              ${{ steps.filter.outputs.ui }}
+      evm-adapter:     ${{ steps.filter.outputs.evm-adapter }}
+      solana-adapter:  ${{ steps.filter.outputs.solana-adapter }}
+      mock-services:   ${{ steps.filter.outputs.mock-services }}
+      infra:           ${{ steps.filter.outputs.infra }}
+      e2e:             ${{ steps.filter.outputs.e2e }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            wallet-api:
+              - 'wallet-api-service/**'
+            ui:
+              - 'funky-wallet-ui/**'
+            evm-adapter:
+              - 'evm-chain-adapter/**'
+            solana-adapter:
+              - 'solana-chain-adapter/**'
+            mock-services:
+              - 'mock-services/**'
+            infra:
+              - 'funky-infra/**'
+            e2e:
+              - 'funky-wallet-e2e/**'
+
+  # ── wallet-api-service ─────────────────────────────────────────────────────
+  test-wallet-api:
+    needs: changes
+    if: needs.changes.outputs.wallet-api == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: wallet-api-service
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: corretto
+          cache: maven
+      - name: Compile
+        run: ./mvnw compile -q
+      - name: Test
+        run: ./mvnw test
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wallet-api-test-results
+          path: wallet-api-service/target/surefire-reports/
+
+  # ── funky-wallet-ui ────────────────────────────────────────────────────────
+  test-ui:
+    needs: changes
+    if: needs.changes.outputs.ui == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: funky-wallet-ui
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: funky-wallet-ui/package-lock.json
+      - run: npm ci
+      - run: npm run build
+      - run: npm test -- --run
+
+  # ── evm-chain-adapter ──────────────────────────────────────────────────────
+  test-evm-adapter:
+    needs: changes
+    if: needs.changes.outputs.evm-adapter == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: evm-chain-adapter
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: corretto
+          cache: maven
+      - run: ./mvnw compile -q
+      - run: ./mvnw test
+
+  # ── solana-chain-adapter ───────────────────────────────────────────────────
+  test-solana-adapter:
+    needs: changes
+    if: needs.changes.outputs.solana-adapter == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: solana-chain-adapter
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: corretto
+          cache: maven
+      - run: ./mvnw compile -q
+      - run: ./mvnw test
+
+  # ── mock-services ──────────────────────────────────────────────────────────
+  test-mock-services:
+    needs: changes
+    if: needs.changes.outputs.mock-services == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: corretto
+          cache: maven
+      - name: Build mock-signing-coordinator
+        run: cd mock-services/mock-signing-coordinator && ./mvnw compile -q
+      - name: Build mock-mpc-node
+        run: cd mock-services/mock-mpc-node && ./mvnw compile -q
+
+  # ── funky-infra (Helm lint) ────────────────────────────────────────────────
+  lint-helm:
+    needs: changes
+    if: needs.changes.outputs.infra == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+        with:
+          version: '3.15.3'
+      - name: Helm lint (dev)
+        run: |
+          helm lint funky-infra/helm/funky-wallet \
+            -f funky-infra/helm/funky-wallet/values/postgres.yaml \
+            -f funky-infra/helm/funky-wallet/values/wallet-api-service.yaml \
+            -f funky-infra/helm/funky-wallet/values/funky-wallet-ui.yaml \
+            -f funky-infra/helm/funky-wallet/values/signing-coordinator.yaml \
+            -f funky-infra/helm/funky-wallet/values/evm-chain-adapter.yaml \
+            -f funky-infra/helm/funky-wallet/values/solana-chain-adapter.yaml \
+            -f funky-infra/helm/funky-wallet/values/geth.yaml \
+            -f funky-infra/helm/funky-wallet/values-dev.yaml
+      - name: Helm template dry-run
+        run: |
+          helm template funky-wallet funky-infra/helm/funky-wallet \
+            -f funky-infra/helm/funky-wallet/values/postgres.yaml \
+            -f funky-infra/helm/funky-wallet/values/wallet-api-service.yaml \
+            -f funky-infra/helm/funky-wallet/values/funky-wallet-ui.yaml \
+            -f funky-infra/helm/funky-wallet/values/signing-coordinator.yaml \
+            -f funky-infra/helm/funky-wallet/values/evm-chain-adapter.yaml \
+            -f funky-infra/helm/funky-wallet/values/solana-chain-adapter.yaml \
+            -f funky-infra/helm/funky-wallet/values/geth.yaml \
+            -f funky-infra/helm/funky-wallet/values-dev.yaml \
+            --namespace funky-wallet > /dev/null

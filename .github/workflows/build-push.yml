@@ -1,0 +1,198 @@
+name: Build & Push Images
+
+on:
+  push:
+    branches: [master]
+
+env:
+  REGISTRY: ghcr.io
+  OWNER: dipans
+
+jobs:
+  # ── Detect which services changed ─────────────────────────────────────────
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      wallet-api:      ${{ steps.filter.outputs.wallet-api }}
+      ui:              ${{ steps.filter.outputs.ui }}
+      evm-adapter:     ${{ steps.filter.outputs.evm-adapter }}
+      solana-adapter:  ${{ steps.filter.outputs.solana-adapter }}
+      mock-signing:    ${{ steps.filter.outputs.mock-signing }}
+      geth:            ${{ steps.filter.outputs.geth }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            wallet-api:
+              - 'wallet-api-service/**'
+            ui:
+              - 'funky-wallet-ui/**'
+            evm-adapter:
+              - 'evm-chain-adapter/**'
+            solana-adapter:
+              - 'solana-chain-adapter/**'
+            mock-signing:
+              - 'mock-services/mock-signing-coordinator/**'
+              - 'mock-services/mock-mpc-node/**'
+            geth:
+              - 'geth-dev/**'
+
+  # ── Login to GHCR (shared step via reuse) ─────────────────────────────────
+  build-wallet-api:
+    needs: changes
+    if: needs.changes.outputs.wallet-api == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: corretto
+          cache: maven
+      - name: Build jar
+        run: cd wallet-api-service && ./mvnw package -DskipTests -q
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: wallet-api-service
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/wallet-api-service:latest
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/wallet-api-service:${{ github.sha }}
+
+  build-ui:
+    needs: changes
+    if: needs.changes.outputs.ui == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: funky-wallet-ui
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/funky-wallet-ui:latest
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/funky-wallet-ui:${{ github.sha }}
+
+  build-evm-adapter:
+    needs: changes
+    if: needs.changes.outputs.evm-adapter == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: corretto
+          cache: maven
+      - run: cd evm-chain-adapter && ./mvnw package -DskipTests -q
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: evm-chain-adapter
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/evm-chain-adapter:latest
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/evm-chain-adapter:${{ github.sha }}
+
+  build-solana-adapter:
+    needs: changes
+    if: needs.changes.outputs.solana-adapter == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: corretto
+          cache: maven
+      - run: cd solana-chain-adapter && ./mvnw package -DskipTests -q
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: solana-chain-adapter
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/solana-chain-adapter:latest
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/solana-chain-adapter:${{ github.sha }}
+
+  build-mock-signing:
+    needs: changes
+    if: needs.changes.outputs.mock-signing == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: corretto
+          cache: maven
+      - run: cd mock-services/mock-signing-coordinator && ./mvnw package -DskipTests -q
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: mock-services/mock-signing-coordinator
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/mock-signing-coordinator:latest
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/mock-signing-coordinator:${{ github.sha }}
+
+  build-geth:
+    needs: changes
+    if: needs.changes.outputs.geth == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: geth-dev
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/geth:latest
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/geth:${{ github.sha }}
