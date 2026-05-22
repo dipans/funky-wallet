@@ -1,14 +1,17 @@
 name: E2E Tests
 
 on:
-  push:
-    branches: [master]
+  # Triggered manually from the Actions tab — not on every push
+  # (E2E builds all images from scratch which takes 15-25 min on cold runners)
   workflow_dispatch:
+  schedule:
+    # Run nightly at 2am UTC on weekdays
+    - cron: '0 2 * * 1-5'
 
 jobs:
   e2e:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
 
     steps:
       - uses: actions/checkout@v4
@@ -19,9 +22,13 @@ jobs:
           cache: npm
           cache-dependency-path: funky-wallet-e2e/package-lock.json
 
-      # start-e2e.sh runs docker compose up --build which builds all images
+      - name: Set up Docker Buildx (layer cache)
+        uses: docker/setup-buildx-action@v3
+
+      # start-e2e.sh runs docker compose up --build (builds all images, waits for healthy)
       - name: Start e2e stack
         run: bash scripts/start-e2e.sh
+        timeout-minutes: 25
         env:
           VITE_AUTH_DISABLED: "true"
           E2E_USER_ID: e2e-test-user
@@ -34,6 +41,10 @@ jobs:
         env:
           E2E_BASE_URL: http://localhost:3000
           API_BASE_URL: http://localhost:8080
+
+      - name: Dump container logs on failure
+        if: failure()
+        run: docker compose -f docker-compose.e2e.yml logs --tail=50
 
       - name: Upload Playwright report
         if: always()
