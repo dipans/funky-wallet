@@ -84,9 +84,26 @@ Null for EVM accounts. For Solana:
 | EVM chain adapter | `EVM_CHAIN_ADAPTER_URL` | http://localhost:9090 |
 | Solana chain adapter | `SOLANA_CHAIN_ADAPTER_URL` | http://localhost:9091 |
 
+## Block watcher — direction-aware deduplication
+
+Both EVM and Solana watchers record **two DB records per on-chain transaction** when both sender and receiver are user accounts (self-send):
+- `CONFIRMED` record: `fromAddress = sender`, dedup check: `existsByHashAndFromAddressAndStatus(hash, from, CONFIRMED)`
+- `RECEIVED` record: `toAddress = receiver`, dedup check: `existsByHashAndToAddressAndStatus(hash, to, RECEIVED)`
+
+Using status in the dedup query is critical — without it, the CONFIRMED record's `toAddress` would block the RECEIVED record creation (same hash + toAddress).
+
+The `hash` column has **no unique constraint** by design.
+
+## CI/CD
+
+| Trigger | Action |
+|---------|--------|
+| PR or push to master | `ci.yml` runs `./mvnw compile` + `./mvnw test` when `wallet-api-service/**` changes |
+| Push to master | `build-push.yml` builds Docker image → `ghcr.io/dipans/wallet-api-service:latest` + `:<sha>` |
+
 ## Status
 - Compile: `./mvnw compile` ✓
-- Tests: `./mvnw test` ✓ (7 tests across 4 test classes)
+- Tests: `./mvnw test` ✓
 - Postgres: `docker compose -f docker-compose.dev.yml up -d` (needs Docker Desktop)
 
 ## Commands

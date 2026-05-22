@@ -33,9 +33,42 @@ Everything in this directory (`funky-wallet-ui/`). Do not touch `wallet-api-serv
 
 Copy `.env.example` to `.env.local` and fill in values for local dev.
 
+## Transaction direction
+
+Direction is determined by `tx.status`, **not by address matching**:
+- `status === 'RECEIVED'` → "↓ Received" (set by block watcher for incoming txs)
+- `status === 'CONFIRMED'` or `'PENDING'` → "↑ Sent"
+
+Address matching (`ownAddresses.has(tx.fromAddress)`) was the old approach but fails for self-sends between two user-owned accounts — both records share the same `fromAddress`, so both would incorrectly show as "Sent".
+
+## Dashboard — network card filtering
+
+- Network cards are **selectable** — click to filter Recent transactions by that network, click again to clear
+- Selected card: accent border + ✓ badge; sibling cards dim to 45% opacity
+- Network pill with × button appears next to "Recent" heading when a filter is active
+- Account dropdown scoped to the selected network (resets if current account doesn't belong to new network)
+- Sort options: Newest, Oldest, Amount ↓, Amount ↑ (client-side, applied before `slice(0, 5)`)
+
+## TransactionStatus type
+
+```ts
+export type TransactionStatus = 'PENDING' | 'CONFIRMED' | 'RECEIVED' | 'FAILED'
+```
+
+`RECEIVED` is set by the block watcher for incoming transactions — include it in the Activity status filter buttons.
+
+## CI/CD
+
+| Trigger | Action |
+|---------|--------|
+| PR or push to master | `ci.yml` runs `npm run build` + `npm test` when `funky-wallet-ui/**` changes |
+| Push to master | `build-push.yml` builds Docker image (nginx, `EXPOSE 80`) → `ghcr.io/dipans/funky-wallet-ui:latest` |
+
+Note: the Dockerfile serves on port **80** (nginx default). The k8s Service maps `svc:3000 → container:80`.
+
 ## Status
 - Build: `npm run build` ✓
-- Tests: `npm test` ✓ (9 assertions in `src/test/components.test.tsx`)
+- Tests: `npm test` ✓
 
 ## Commands
 ```bash

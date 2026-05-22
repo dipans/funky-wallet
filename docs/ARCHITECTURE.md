@@ -456,3 +456,99 @@ sequenceDiagram
 | EVM | Iterate new blocks by number | `block_sync_state.lastProcessedBlock` per network |
 | Solana | Poll signatures per address | `solana_sync_state.lastSignature` per address |
 | Bitcoin *(future)* | Poll UTXOs or address subscriptions | TBD |
+
+### Direction-aware deduplication
+Each on-chain transaction can create **two DB records** — one SENT, one RECEIVED — when both ends belong to the same user (self-send). Dedup uses status-aware queries:
+
+- `existsByHashAndFromAddressAndStatus(hash, from, CONFIRMED)` — prevents duplicate SENT records
+- `existsByHashAndToAddressAndStatus(hash, to, RECEIVED)` — prevents duplicate RECEIVED records
+
+Without the `status` predicate, the CONFIRMED record's `toAddress` would match the RECEIVED dedup check and block it. The `hash` column has **no unique constraint** by design.
+
+### Transaction direction in UI
+Direction is derived from `tx.status`, not address matching:
+- `status === 'RECEIVED'` → "↓ Received"
+- `status === 'CONFIRMED'` or `'PENDING'` → "↑ Sent"
+
+Address matching fails for self-sends (sender is also a user account), making both records show as "Sent".
+
+---
+
+## 12. Mono-Repo Structure
+
+All services live in a single git repository (`github.com/dipans/funky-wallet`):
+
+```
+funky-wallet/
+├── .github/workflows/       ← CI/CD (GitHub Actions)
+├── funky-wallet-ui/         ← React SPA (Pixel)
+├── wallet-api-service/      ← Spring Boot API (Forge)
+├── evm-chain-adapter/       ← EVM JSON-RPC adapter (Forge)
+├── solana-chain-adapter/    ← Solana JSON-RPC adapter (Forge)
+├── mock-services/           ← MPC signing + mock chain (Phantom)
+├── funky-wallet-e2e/        ← Playwright e2e tests (Scout)
+├── funky-infra/             ← Kubernetes + Helm + Istio (Grid)
+└── geth-dev/                ← Local Geth node (e2e only)
+```
+
+Previous separate repos (`dipans/wallet-api-service`, `dipans/funky-wallet-ui`, etc.) are archived on GitHub — history preserved there.
+
+---
+
+## 13. CI/CD Pipeline
+
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#f0f4ff', 'lineColor': '#555'}}}%%
+graph LR
+    classDef trigger  fill:#4A90D9,stroke:#2C6FAC,color:#fff,font-weight:bold
+    classDef ci       fill:#27AE60,stroke:#1E8449,color:#fff,font-weight:bold
+    classDef build    fill:#E67E22,stroke:#CA6F1E,color:#fff,font-weight:bold
+    classDef deploy   fill:#9B59B6,stroke:#7D3C98,color:#fff,font-weight:bold
+    classDef registry fill:#E74C3C,stroke:#CB4335,color:#fff,font-weight:bold
+    classDef e2e      fill:#F39C12,stroke:#D68910,color:#fff,font-weight:bold
+
+    PR["Pull Request\nor push to master"]:::trigger
+    NightlyManual["Nightly 2am UTC\nor workflow_dispatch"]:::trigger
+
+    subgraph CICD["  GitHub Actions  "]
+        Filter["dorny/paths-filter\ndetect changed services"]:::ci
+        JavaCI["Java CI\ncompile + mvn test"]:::ci
+        UICI["UI CI\nnpm build + vitest"]:::ci
+        HelmCI["Helm CI\nlint + template dry-run"]:::ci
+        BuildPush["build-push.yml\nDocker build per service"]:::build
+        E2EBuild["E2E: docker compose\nup --build (all images)"]:::e2e
+        E2ETest["Playwright tests\nChromium headless"]:::e2e
+    end
+
+    GHCR["ghcr.io/dipans/\n:latest + :sha"]:::registry
+    K8s["Docker Desktop k8s\nfunky-wallet namespace"]:::deploy
+
+    PR --> Filter
+    Filter -->|wallet-api-service/**| JavaCI
+    Filter -->|funky-wallet-ui/**| UICI
+    Filter -->|funky-infra/**| HelmCI
+    PR -->|push to master| BuildPush
+    BuildPush --> GHCR
+    NightlyManual --> E2EBuild
+    E2EBuild --> E2ETest
+    GHCR -.->|helm upgrade| K8s
+```
+
+### Workflow summary
+
+| Workflow | Trigger | Jobs |
+|----------|---------|------|
+| `ci.yml` | Every PR + push to master | compile + test for each changed service (path-filtered) |
+| `build-push.yml` | Push to master | build Docker image + push to GHCR for each changed service |
+| `e2e.yml` | Manual + nightly 2am UTC | `docker compose up --build` → Playwright Chromium tests |
+
+### Image registry
+All images at `ghcr.io/dipans/<service>` — tagged `:latest` and `:<git-sha>`.
+`GITHUB_TOKEN` provides GHCR write access — no additional secrets required.
+
+### Local k8s deploy
+Docker Desktop uses the **containerd image store** (`containerd-snapshotter: true`), so locally-built images are available to k8s without a registry push:
+```bash
+docker build -t ghcr.io/dipans/wallet-api-service:latest wallet-api-service/
+# image immediately available in k8s — no push needed
+```
