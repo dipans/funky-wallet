@@ -1,0 +1,37 @@
+frontend:
+  - changed-files:
+    - any-glob-to-any-file: 'funky-wallet-ui/**'
+
+backend:
+  - changed-files:
+    - any-glob-to-any-file: 'wallet-api-service/**'
+
+evm-adapter:
+  - changed-files:
+    - any-glob-to-any-file: 'evm-chain-adapter/**'
+
+solana-adapter:
+  - changed-files:
+    - any-glob-to-any-file: 'solana-chain-adapter/**'
+
+mock-services:
+  - changed-files:
+    - any-glob-to-any-file: 'mock-services/**'
+
+infra:
+  - changed-files:
+    - any-glob-to-any-file: 'funky-infra/**'
+
+e2e:
+  - changed-files:
+    - any-glob-to-any-file: 'funky-wallet-e2e/**'
+
+ci:
+  - changed-files:
+    - any-glob-to-any-file: '.github/**'
+
+docs:
+  - changed-files:
+    - any-glob-to-any-file: 'docs/**'
+    - any-glob-to-any-file: '**/CLAUDE.md'
+    - any-glob-to-any-file: '**/README.md'
