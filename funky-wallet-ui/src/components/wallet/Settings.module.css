@@ -66,6 +66,45 @@
 
 .about { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
 
+.settingDesc { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+
+.funderStatus {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  background: rgba(39,174,96,0.08);
+  border: 1px solid rgba(39,174,96,0.3);
+  border-radius: var(--radius-sm);
+}
+
+.funderBadge {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--success);
+}
+
+.funderWarning {
+  font-size: 13px;
+  color: var(--warning, #e67e22);
+  padding: 10px 12px;
+  background: rgba(230,126,34,0.08);
+  border: 1px solid rgba(230,126,34,0.3);
+  border-radius: var(--radius-sm);
+}
+
+.addressInput {
+  flex: 1;
+  font-size: 12px;
+  font-family: var(--font-mono);
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+}
+.addressInput:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+
 .divider {
   border: none;
   border-top: 1px solid var(--border);

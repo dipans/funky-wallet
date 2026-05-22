@@ -51,6 +51,20 @@ export const accountApi = {
     client.get<Balance>(`/accounts/${address}/balance`).then((r) => r.data),
 }
 
+export interface AppSettings {
+  solanaNonceFunderAddress: string
+  solanaNonceFunderConfigured: boolean
+  solanaNonceFunderKeypairAddress: string
+}
+
+export const settingsApi = {
+  get: (): Promise<AppSettings> =>
+    client.get<AppSettings>('/settings').then((r) => r.data),
+
+  setSolanaNonceFunder: (address: string): Promise<AppSettings> =>
+    client.put<AppSettings>('/settings/solana-nonce-funder', { address }).then((r) => r.data),
+}
+
 export const transactionApi = {
   send: (payload: { fromAddress: string; toAddress: string; amount: string; network: Network }): Promise<Transaction> =>
     client.post<Transaction>('/transactions', payload).then((r) => r.data),

@@ -55,6 +55,13 @@ public class SolanaAdapterController {
         return solanaWatcherService.getNewTransactions(address, since);
     }
 
+    // GET /nonce/funder — returns the public address of the configured nonce funder
+    @GetMapping("/nonce/funder")
+    public Map<String, String> getNonceFunder() {
+        String address = solanaService.getNonceFunderAddress();
+        return Map.of("address", address, "configured", String.valueOf(!address.isBlank()));
+    }
+
     // GET /health
     @GetMapping("/health")
     public Map<String, String> health() {

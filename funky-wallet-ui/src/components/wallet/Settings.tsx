@@ -1,5 +1,8 @@
+import { useState } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useWalletStore } from '../../store/walletStore'
 import { useAccounts } from '../../hooks/useWallet'
+import { settingsApi } from '../../api'
 import type { Network } from '../../types'
 import styles from './Settings.module.css'
 
@@ -22,6 +25,20 @@ function Toggle({ checked, onChange, disabled }: { checked: boolean; onChange?: 
 export default function Settings() {
   const { activeAccount, activeNetwork, accounts, setActiveAccount, setActiveNetwork, confirmationSettings, setConfirmationSettings } = useWalletStore()
   useAccounts()
+
+  const qc = useQueryClient()
+  const { data: appSettings } = useQuery({
+    queryKey: ['settings'],
+    queryFn: settingsApi.get,
+  })
+
+  const solanaAccounts = accounts.filter((a) => a.networkType === 'SOLANA')
+  const [customFunderAddress, setCustomFunderAddress] = useState('')
+
+  const saveFunder = useMutation({
+    mutationFn: (address: string) => settingsApi.setSolanaNonceFunder(address),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['settings'] }),
+  })
 
   return (
     <div className={styles.page}>
@@ -93,6 +110,76 @@ export default function Settings() {
             onChange={(v) => setConfirmationSettings({ local: v })}
           />
         </div>
+      </section>
+
+      <section className={`card ${styles.section}`}>
+        <h2 className={styles.sectionTitle}>Solana — Nonce Funder</h2>
+        <p className={styles.settingDesc}>
+          This account pays for creating durable nonce accounts (~0.00145 SOL each) used in
+          Solana MPC transactions. The private key must be configured via{' '}
+          <code>SOLANA_NONCE_FUNDER_KEYPAIR</code> in the chain adapter.
+        </p>
+
+        {appSettings?.solanaNonceFunderConfigured ? (
+          <div className={styles.funderStatus}>
+            <span className={styles.funderBadge}>✓ Keypair configured</span>
+            <span className="mono" style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+              {appSettings.solanaNonceFunderKeypairAddress}
+            </span>
+          </div>
+        ) : (
+          <p className={styles.funderWarning}>
+            ⚠ No keypair configured — nonce accounts will use a placeholder address.
+            Set <code>SOLANA_NONCE_FUNDER_KEYPAIR</code> in the Solana chain adapter.
+          </p>
+        )}
+
+        <hr className={styles.divider} />
+        <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8 }}>
+          Select from your Solana accounts:
+        </p>
+        <div className={styles.optionGrid}>
+          {solanaAccounts.length === 0 && (
+            <p className={styles.empty}>No Solana accounts yet.</p>
+          )}
+          {solanaAccounts.map((acc) => (
+            <button
+              key={acc.address}
+              className={`${styles.optBtn} ${
+                appSettings?.solanaNonceFunderAddress === acc.address ? styles.optBtnActive : ''
+              }`}
+              onClick={() => saveFunder.mutate(acc.address)}
+              title={acc.address}
+            >
+              {acc.address.slice(0, 8)}…{acc.address.slice(-6)}
+            </button>
+          ))}
+        </div>
+
+        <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '12px 0 6px' }}>
+          Or enter an address manually:
+        </p>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <input
+            className={styles.addressInput}
+            placeholder="Solana address (base58)"
+            value={customFunderAddress}
+            onChange={(e) => setCustomFunderAddress(e.target.value)}
+          />
+          <button
+            className="btn btn-primary btn-sm"
+            disabled={!customFunderAddress.trim() || saveFunder.isPending}
+            onClick={() => { saveFunder.mutate(customFunderAddress.trim()); setCustomFunderAddress('') }}
+          >
+            {saveFunder.isPending ? 'Saving…' : 'Save'}
+          </button>
+        </div>
+
+        {appSettings?.solanaNonceFunderAddress && (
+          <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 8 }}>
+            Saved: <span className="mono">{appSettings.solanaNonceFunderAddress}</span>
+          </p>
+        )}
       </section>
 
       <section className={`card ${styles.section}`}>

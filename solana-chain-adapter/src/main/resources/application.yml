@@ -9,6 +9,10 @@ solana:
   # Devnet by default for local dev; override with SOLANA_RPC_URL for mainnet/testnet
   rpc:
     url: ${SOLANA_RPC_URL:https://api.devnet.solana.com}
+  # 64-byte base58-encoded keypair of the account that funds nonce account creation.
+  # Each nonce account costs ~0.00145 SOL (rent-exempt minimum for 80 bytes).
+  # Leave blank to fall back to the SHA-256 placeholder (dev only).
+  nonce-funder-keypair: ${SOLANA_NONCE_FUNDER_KEYPAIR:}
 
 logging:
   level:

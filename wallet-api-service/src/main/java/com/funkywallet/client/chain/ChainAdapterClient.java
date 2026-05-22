@@ -92,6 +92,23 @@ public class ChainAdapterClient {
         }
     }
 
+    // ── Solana nonce funder ───────────────────────────────────────────────────
+
+    /** Returns the public address of the nonce funder configured in the Solana chain adapter. */
+    public String getSolanaNonceFunderAddress() {
+        try {
+            return solanaClient.get()
+                .uri("/nonce/funder")
+                .retrieve()
+                .bodyToMono(NonceFunderResponse.class)
+                .map(r -> r.address() != null ? r.address() : "")
+                .block();
+        } catch (Exception e) {
+            log.warn("Could not fetch Solana nonce funder: {}", e.getMessage());
+            return "";
+        }
+    }
+
     // ── Solana account setup ──────────────────────────────────────────────────
 
     /**
@@ -170,6 +187,8 @@ public class ChainAdapterClient {
     public record SetupResponse(String nonceAccount) {
         public String getNonceAccount() { return nonceAccount; }
     }
+
+    public record NonceFunderResponse(String address, boolean configured) {}
 
     public record SolanaIncomingTx(
         String signature,
