@@ -21,23 +21,32 @@ function wrapper({ children }: { children: React.ReactNode }) {
 
 describe('Dashboard', () => {
   beforeEach(() => {
-    // reset store so test-account seeding doesn't affect empty-state test
     useWalletStore.setState({ accounts: [], activeAccount: null })
   })
 
-  it('shows create account prompt when no account is active', () => {
+  it('renders Portfolio heading and network cards', () => {
     render(<Dashboard />, { wrapper })
-    expect(screen.getByText('No account yet.')).toBeTruthy()
-    expect(screen.getByRole('button', { name: /create account/i })).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'Portfolio' })).toBeTruthy()
+    // Three selectable network cards
+    expect(screen.getByRole('button', { name: /ethereum/i })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /solana/i })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /bitcoin/i })).toBeTruthy()
+  })
+
+  it('renders Send and New Account action buttons', () => {
+    render(<Dashboard />, { wrapper })
+    expect(screen.getByRole('button', { name: /send/i })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /new account/i })).toBeTruthy()
   })
 })
 
 describe('Activity', () => {
-  it('renders filter buttons', () => {
+  it('renders filter buttons including RECEIVED', () => {
     render(<Activity />, { wrapper })
     expect(screen.getByRole('button', { name: 'ALL' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'PENDING' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'CONFIRMED' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'RECEIVED' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'FAILED' })).toBeTruthy()
   })
 })
